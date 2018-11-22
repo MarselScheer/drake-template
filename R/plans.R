@@ -10,7 +10,8 @@ flog.info("import defined")
 plans$p02_wrangle <- 
   drake_plan(
     d = wrangle(r),
-    rmd_cleaning = rmarkdown::render(knitr_in("d_cleaning.Rmd"), output_file = file_out("./reports/d_cleaning.html"), quiet = TRUE)
+    rmd_cleaning = rmarkdown::render(knitr_in("d_cleaning.Rmd"), output_file = file_out("./reports/d_cleaning.md"), quiet = TRUE),
+    rmd_cleaning_DT = rmarkdown::render(knitr_in("d_cleaning_DT.Rmd"), output_file = file_out("./reports/d_cleaning_DT.html"), quiet = TRUE)
   ) 
 flog.info("wrangle defined")
 

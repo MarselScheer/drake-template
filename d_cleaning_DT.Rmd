@@ -1,0 +1,21 @@
+---
+title: "cleaning"
+author: "m"
+date: "October 17, 2018"
+output: 
+  html_document
+---
+
+```{r, echo=FALSE}
+source("./R/libs.R")
+source("./R/funs.R")
+```
+
+# df_status
+
+```{r, echo=FALSE}
+all <- h.add_list_name_as_column(readd(d))
+funModeling::df_status(all, print_results = FALSE) %>% 
+  DT::datatable()
+```
+

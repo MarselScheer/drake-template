@@ -7,27 +7,22 @@ output:
     keep_md: yes
 ---
 
-```{r}
+```{r, echo=FALSE}
 source("./R/libs.R")
 source("./R/funs.R")
-```
 
-
-# basic description
-```{r}
 train <- readd(d)$train
 all <- h.add_list_name_as_column(readd(d))
 ```
 
 # df_status
 
-```{r}
-funModeling::df_status(all) %>% 
-  DT::datatable()
+```{r, echo=FALSE}
+funModeling::df_status(all)
 ```
 
 # skim
-```{r}
+```{r, echo=FALSE}
 stats <- skimr:::.default
 stats$numeric$skew <- e1071::skewness
 skimr::skim_with(.list = stats)
