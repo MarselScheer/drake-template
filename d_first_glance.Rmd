@@ -7,20 +7,17 @@ output:
     keep_md: yes
 ---
 
-```{r}
+```{r, echo=FALSE}
 source("./R/libs.R")
 source("./R/funs.R")
-```
 
-
-```{r}
 train <- readd(d)$train
 loadd(d_cor)
 ```
 
 # cor
 
-```{r, fig.width=20, fig.height=20}
+```{r, fig.width=20, fig.height=20, echo=FALSE}
 corrr::network_plot(d_cor)
 
 d_cor %>% 
@@ -30,13 +27,13 @@ d_cor %>%
 
 # cross_plot
 
-```{r}
+```{r, echo=FALSE}
 #funModeling::cross_plot(train, input = c("sibsp", "parch"), target = "y")
 ```
 
 # simple tree
 
-```{r, fig.width=20, fig.height=20}
+```{r, fig.width=20, fig.height=20, echo=FALSE}
 var_char <- train %>% dplyr::select_if(is.character) %>% names()
 
 for (depth in 1:4) {

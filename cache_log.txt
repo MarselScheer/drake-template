@@ -1,11 +1,13 @@
 hash type name
+dd02735e55ee9fd4 target "./reports/d_cleaning_DT.html"
 72048e70bde657c9 target "./reports/d_cleaning.html"
-f9e55df192469579 target "./reports/d_cleaning.md"
-82d927f6a6ec4748 target "./reports/d_first_glance.html"
-5d02b71cb674ebcb import "d_cleaning.Rmd"
+5677d53adc2511a1 target "./reports/d_cleaning.md"
+cd0bb318921343ae target "./reports/d_first_glance.html"
+ac0db4e5e74b12d4 import "d_cleaning_DT.Rmd"
+75f4bfe3f10c9162 import "d_cleaning.Rmd"
 3ea8d2dc9b9879ac import "d_datatable.Rmd"
 3ea8d2dc9b9879ac import "d_eda.Rmd"
-faa9013cfbca14fa import "d_first_glance.Rmd"
+48c3140fcc936e63 import "d_first_glance.Rmd"
 3ea8d2dc9b9879ac import "possible_special_features.Rmd"
 15ce64b0bbd1be03 target clean_rmd
 72126c4992f994bc import corrr::correlate
@@ -22,6 +24,7 @@ d45788b8aa5eb8a8 import get_segmentation_data
 b3ebf08c0233a4a0 import lowercase_names
 ea7df58a17763527 target r
 b7299c6d33b92763 import rmarkdown::render
-15ce64b0bbd1be03 target rmd_cleaning
+53db8817b8ef7cfa target rmd_cleaning
+382e836ea7ef46ad target rmd_cleaning_DT
 a571a18e9065ccc0 target rmd_first_glance
 07ff9e99fd8a1783 import wrangle
