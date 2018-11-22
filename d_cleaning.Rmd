@@ -1,0 +1,38 @@
+---
+title: "cleaning"
+author: "m"
+date: "October 17, 2018"
+output: 
+  html_document:
+    keep_md: yes
+---
+
+```{r}
+source("./R/libs.R")
+source("./R/funs.R")
+```
+
+
+# basic description
+```{r}
+train <- readd(d)$train
+all <- h.add_list_name_as_column(readd(d))
+```
+
+# df_status
+
+```{r}
+funModeling::df_status(all) %>% 
+  DT::datatable()
+```
+
+# skim
+```{r}
+stats <- skimr:::.default
+stats$numeric$skew <- e1071::skewness
+skimr::skim_with(.list = stats)
+
+all %>% skimr::skim()
+all %>% dplyr::group_by(df_name) %>% skimr::skim()
+```
+

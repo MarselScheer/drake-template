@@ -1,3 +1,18 @@
+#-# 
+
+wrangle <- function(df){
+  df <- df %>% 
+    dplyr::rename(y = class) %>% 
+    dplyr::mutate(.set = tolower(.set)) %>% 
+    h.y_as_first_col()
+  
+  
+   df %>% 
+    split(.$.set) %>% 
+    lapply(function(d) dplyr::select(d, -.set))
+}
+
+
 #-# data import
 
 load_fname <- function(fname, .set){
@@ -20,6 +35,10 @@ lowercase_names <- function(df){
 
 
 #-# helper-functions
+
+h.y_as_first_col <- function(df) {
+  df[, c("y", setdiff(names(df), "y"))]
+}
 
 h.add_list_name_as_column <- function(list_of_df){
   lapply(names(list_of_df), function(N){

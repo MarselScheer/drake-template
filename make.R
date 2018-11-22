@@ -25,3 +25,7 @@ get_segmentation_data <- function() {
 }
 flog.info("run plan")
 make(sub_plan, cache_log_file = "cache_log.txt")
+
+readd(d)$train %>% 
+  dplyr::as_tibble() %>% 
+  print()
