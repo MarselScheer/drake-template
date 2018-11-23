@@ -24,3 +24,8 @@ funModeling::df_status(all, print_results = FALSE) %>%
   DT::datatable()
 ```
 
+# sessionInfo
+
+```{r, echo=FALSE}
+sessionInfo()
+```

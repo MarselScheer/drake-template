@@ -36,3 +36,8 @@ all %>% skimr::skim()
 all %>% dplyr::group_by(df_name) %>% skimr::skim()
 ```
 
+# sessionInfo
+
+```{r, echo=FALSE}
+sessionInfo()
+```

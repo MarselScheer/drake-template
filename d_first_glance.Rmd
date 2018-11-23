@@ -48,3 +48,9 @@ for (depth in 1:4) {
 partykit::ctree(y ~ ., data = dplyr::select(train, -dplyr::one_of(var_char))) %>% 
   plot
 ```
+
+# sessionInfo
+
+```{r, echo=FALSE}
+sessionInfo()
+```
