@@ -3,12 +3,16 @@ title: "first glance"
 author: "m"
 date: "October 17, 2018"
 output: 
-  html_document:
-    keep_md: yes
+  html_document
 ---
 
+```{r echo=FALSE, results='asis'}
+source("./R/rmd_prep.R")
+```
+
+
 ```{r, echo=FALSE}
-source("./R/libs.R")
+suppressMessages(source("./R/libs.R"))
 source("./R/funs.R")
 
 train <- readd(d)$train

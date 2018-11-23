@@ -7,8 +7,13 @@ output:
     keep_md: yes
 ---
 
+```{r echo=FALSE, results='asis'}
+source("./R/rmd_prep.R")
+```
+
+
 ```{r, echo=FALSE}
-source("./R/libs.R")
+suppressMessages(source("./R/libs.R"))
 source("./R/funs.R")
 
 train <- readd(d)$train
