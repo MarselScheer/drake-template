@@ -21,7 +21,7 @@ source("./R/funs.R")
 ```{r, echo=FALSE}
 all <- h.add_list_name_as_column(readd(d))
 funModeling::df_status(all, print_results = FALSE) %>% 
-  DT::datatable()
+  DT::datatable(options = list(pageLength = 100))
 ```
 
 # sessionInfo

@@ -32,7 +32,7 @@ d_cor %>%
 # cross_plot
 
 ```{r, echo=FALSE}
-#funModeling::cross_plot(train, input = c("sibsp", "parch"), target = "y")
+funModeling::cross_plot(train, input = c("spotfibercountch3"), target = "y")
 ```
 
 # simple tree
