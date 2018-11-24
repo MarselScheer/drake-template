@@ -30,7 +30,7 @@ plans$p04_raw_folds <-
       )
   )
 
-plans$p05_recipes <- 
+plans$p05_recipes_1_basic <- 
   drake_plan(
     rcp_pure = recipes::recipe(y ~ ., data = head(d$train)) %>% 
       step_rm(cell), 
@@ -38,25 +38,68 @@ plans$p05_recipes <-
       step_YeoJohnson(all_predictors()) %>% 
       step_center(all_predictors()) %>% 
       step_scale(all_predictors()),
-    rcp_filter_cor = rcp_basic %>% 
-      step_corr(all_predictors(), threshold = 0.7),
     rcp_filter_pca = rcp_basic %>% 
       step_pca(all_predictors(), threshold = 0.9)
   )
 
-
-plans$p06_folds <- 
-  drake_plan(
-    fr_pure = apply_recipe_to_folds(rcp_pure, raw_folds),
-    fr_cor  = apply_recipe_to_folds(rcp_filter_cor, raw_folds),
-    fr_pca  = apply_recipe_to_folds(rcp_filter_pca, raw_folds)
+plans$p05_recipes_2_filter <- 
+  drake::bind_plans(
+    drake_plan(
+      rcp_filter_cor = rcp_basic %>% 
+        step_corr(all_predictors(), threshold = threshold__)
+    ) %>% evaluate_plan(
+      rules = list(
+        threshold__ = c(0.5, 0.7, 0.9)
+      ),
+      trace = TRUE
+    ),
+    drake_plan(
+      rcp_filter_pca = rcp_basic %>% 
+        step_pca(all_predictors(), threshold = threshold__)
+    ) %>% evaluate_plan(
+      rules = list(
+        threshold__ = c(0.8, 0.9, 0.95)
+      ),
+      trace = TRUE
+    )  
   )
+  
+  
+plans$p06_folds_1_pure <- 
+  drake_plan(
+    fr_pure = apply_recipe_to_folds(rcp_pure, raw_folds)
+  )
+
+plans$p06_folds_1_filter <- 
+  drake_plan(
+    fr  = apply_recipe_to_folds(rcp__, raw_folds)
+  ) %>% evaluate_plan(
+    rules = list(
+      rcp__ = plans$p05_recipes_2_filter$target
+    ),
+    trace = TRUE
+  ) %>% 
+  dplyr::left_join(
+    dplyr::select(plans$p05_recipes_2_filter, target, threshold = threshold__), 
+    by = c("rcp__" = "target")) %>% 
+  dplyr::select(-contains("rcp__"))
 
 
 plans$p07_model_tuning <- 
   drake_plan(
-    glm_cor = purrr::map_dfr(fr_cor, function(fold) metric_profile_per_fold("glm", fold, NULL), .id = "fold"),
-    glm_pca = purrr::map_dfr(fr_pca, function(fold) metric_profile_per_fold("glm", fold, NULL), .id = "fold"),
-    rf_pure = purrr::map_dfr(fr_pure, function(fold) metric_profile_per_fold("rf", fold, tune_grid = data.frame(mtry = c(5, 10, 20, 30, 40, 58))), .id = "fold")
-  )
+    rf_pure = purrr::map_dfr(fr_pure, function(fold) metric_profile_per_fold("rf", fold, tune_grid = data.frame(mtry = c(5, 10, 20, 30, 40, 58))), .id = "fold"),
+    glm = purrr::map_dfr(rcp__, function(fold) metric_profile_per_fold("glm", fold, NULL), .id = "fold")
+  ) %>% evaluate_plan(
+    rules = list(
+      rcp__ = plans$p06_folds_1_filter$target
+    ),
+    trace = TRUE
+  ) %>% 
+    dplyr::left_join(
+      dplyr::select(plans$p06_folds_1_filter, target, threshold), 
+      by = c("rcp__" = "target")) %>% 
+    dplyr::select(-contains("rcp__"))
+
+  
+plans
 
