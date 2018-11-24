@@ -22,3 +22,39 @@ plans$p03_first_glance <-
     #d_var_rank = funModeling::var_rank_info(d$train, "y") # takes quite a while
   )
 
+plans$p04_raw_folds <- 
+  drake_plan(
+    raw_folds = purrr::map(
+      rsample::vfold_cv(d$train, v = VFOLDS)$splits,
+      function(s) list(analysis = rsample::analysis(s), assessment = rsample::assessment(s))
+      )
+  )
+
+plans$p05_recipes <- 
+  drake_plan(
+    rcp = recipes::recipe(y ~ ., data = head(d$train)) %>% 
+      step_rm(cell) %>% 
+      step_YeoJohnson(all_predictors()) %>% 
+      step_center(all_predictors()) %>% 
+      step_scale(all_predictors()),
+    rcp_filter_cor = rcp %>% 
+      step_corr(all_predictors(), threshold = 0.7),
+    rcp_filter_pca = rcp %>% 
+      step_pca(all_predictors(), threshold = 0.9)
+  )
+
+apply_recipe_to_folds <- function(rcp, folds){
+  purrr::map(
+    folds,
+    function(f){
+      rcp <- recipes::prep(rcp, training = f$analysis, retain = TRUE)
+      list(analysis = recipes::juice(rcp), assessment = recipes::bake(rcp, newdata = f$assessment))
+    }
+  )
+}
+
+plans$p06_folds <- 
+  drake_plan(
+    fr_cor = apply_recipe_to_folds(rcp_filter_cor, raw_folds),
+    fr_pca = apply_recipe_to_folds(rcp_filter_pca, raw_folds)
+  )

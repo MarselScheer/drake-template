@@ -1,6 +1,6 @@
 rm(list = ls())
 
-VFOLDS <- 10
+VFOLDS <- 2
 
 source("R/libs.R")
 source("R/funs.R")
