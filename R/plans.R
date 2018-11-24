@@ -100,6 +100,12 @@ plans$p07_model_tuning <-
       by = c("rcp__" = "target")) %>% 
     dplyr::select(-contains("rcp__"))
 
+plans$p08_aggregate <- 
+  drake::bind_plans(
+    gather_plan(plans$p07_model_tuning, target = "pre_gathered_metric", gather = "h.bind_rows_with_id"),
+    drake_plan(profiles = dplyr::left_join(pre_gathered_metric, dplyr::select(plans$p07_model_tuning, -command)))
+  )
   
+
 plans
 
