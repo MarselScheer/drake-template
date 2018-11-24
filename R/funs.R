@@ -1,3 +1,32 @@
+#-# tune 
+
+metric_profile_per_fold <- function(method, fold, tune_grid, ...) {
+  
+  fit <- function(tg_row) caret::train(y ~., method = method, data = fold$analysis, tuneGrid = tg_row, trControl = trainControl(method = "none"), ...)
+  probs <- function(model) caret::predict.train(model, newdata = fold$assessment, type = 'prob')$PS
+  
+  if (is.null(tune_grid)) {
+    return(
+      data.frame(
+        AUC = MLmetrics::AUC(
+          y_pred = probs(fit(NULL)), 
+          y_true = fold$assessment$y == 'PS'),
+        grid = FALSE)
+    )
+  }
+  
+  ret <- tune_grid
+  ret$AUC <- NA
+  for (row in 1:nrow(tune_grid)) {
+    ret$AUC[row] <- MLmetrics::AUC(
+      y_pred = probs(fit(tune_grid[row, , drop = FALSE])), 
+      y_true = fold$assessment$y == 'PS')
+  }
+  ret$grid <- TRUE
+  ret
+}
+
+
 #-# recipe and folds
 
 apply_recipe_to_folds <- function(rcp, folds){
@@ -11,7 +40,7 @@ apply_recipe_to_folds <- function(rcp, folds){
 }
 
 
-#-# 
+#-# wrangle 
 
 wrangle <- function(df){
   df <- df %>% 
