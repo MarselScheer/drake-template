@@ -10,6 +10,8 @@ ff41788adbd13043 target "./reports/d_first_glance.html"
 46691e5caa782226 import "d_first_glance.Rmd"
 3ea8d2dc9b9879ac import "possible_special_features.Rmd"
 3b9ce0899483155d import apply_recipe_to_folds
+20f15af2d356b9a1 import caret::predict.train
+ff4a90529317a724 import caret::train
 15ce64b0bbd1be03 target clean_rmd
 72126c4992f994bc import corrr::correlate
 5193422938b91aec target d
@@ -25,9 +27,14 @@ e97414f3ce3be125 import dplyr::mutate
 b712af2effde8216 target fr_pca
 854e185b359a8e47 import funModeling::var_rank_info
 d45788b8aa5eb8a8 import get_segmentation_data
+3665739fe8098503 target glm_cor
+48d208eec6824ea3 target glm_pca
 9934551fa55d3004 import h.y_as_first_col
 b3ebf08c0233a4a0 import lowercase_names
+dca94ba4754aff5c import metric_profile_per_fold
+cdbbea42a0463914 import MLmetrics::AUC
 95c9f0dbd80b434a import purrr::map
+8f7885e84fa2a164 import purrr::map_dfr
 ea7df58a17763527 target r
 efee4ad5e3b52403 target raw_folds
 6f4dc173f169fd32 target rcp

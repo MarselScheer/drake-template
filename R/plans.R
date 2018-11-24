@@ -50,3 +50,37 @@ plans$p06_folds <-
     fr_pca = apply_recipe_to_folds(rcp_filter_pca, raw_folds)
   )
 
+
+metric_profile_per_fold <- function(method, fold, tune_grid, ...) {
+  
+  fit <- function(tg_row) caret::train(y ~., method = method, data = fold$analysis, tuneGrid = tg_row, trControl = trainControl(method = "none"), ...)
+  probs <- function(model) caret::predict.train(model, newdata = fold$assessment, type = 'prob')$PS
+  
+  if (is.null(tune_grid)) {
+    return(
+      data.frame(
+        grid = FALSE, 
+        AUC = MLmetrics::AUC(
+          y_pred = probs(fit(NULL)), 
+          y_true = fold$assessment$y == 'PS'))
+    )
+  }
+  
+  ret <- tune_grid
+  ret$AUC <- NA
+  for (row in 1:nrow(tune_grid)) {
+    ret$AUC[row] <- MLmetrics::AUC(
+      y_pred = probs(fit(tune_grid[row, , drop = FALSE])), 
+      y_true = fold$assessment$y == 'PS')
+  }
+  ret$grid <- TRUE
+  ret
+}
+
+
+plans$p07_model_tuning <- 
+  drake_plan(
+    glm_cor = purrr::map_dfr(fr_cor, function(fold) metric_profile_per_fold("glm", fold, NULL), .id = "fold"),
+    glm_pca = purrr::map_dfr(fr_pca, function(fold) metric_profile_per_fold("glm", fold, NULL), .id = "fold")
+  )
+
