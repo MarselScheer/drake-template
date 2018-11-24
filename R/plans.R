@@ -43,18 +43,10 @@ plans$p05_recipes <-
       step_pca(all_predictors(), threshold = 0.9)
   )
 
-apply_recipe_to_folds <- function(rcp, folds){
-  purrr::map(
-    folds,
-    function(f){
-      rcp <- recipes::prep(rcp, training = f$analysis, retain = TRUE)
-      list(analysis = recipes::juice(rcp), assessment = recipes::bake(rcp, newdata = f$assessment))
-    }
-  )
-}
 
 plans$p06_folds <- 
   drake_plan(
     fr_cor = apply_recipe_to_folds(rcp_filter_cor, raw_folds),
     fr_pca = apply_recipe_to_folds(rcp_filter_pca, raw_folds)
   )
+

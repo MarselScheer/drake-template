@@ -1,3 +1,16 @@
+#-# recipe and folds
+
+apply_recipe_to_folds <- function(rcp, folds){
+  purrr::map(
+    folds,
+    function(f){
+      rcp <- recipes::prep(rcp, training = f$analysis, retain = TRUE)
+      list(analysis = recipes::juice(rcp), assessment = recipes::bake(rcp, newdata = f$assessment))
+    }
+  )
+}
+
+
 #-# 
 
 wrangle <- function(df){
