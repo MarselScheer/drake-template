@@ -32,22 +32,24 @@ plans$p04_raw_folds <-
 
 plans$p05_recipes <- 
   drake_plan(
-    rcp = recipes::recipe(y ~ ., data = head(d$train)) %>% 
-      step_rm(cell) %>% 
+    rcp_pure = recipes::recipe(y ~ ., data = head(d$train)) %>% 
+      step_rm(cell), 
+    rcp_basic = rcp_pure %>% 
       step_YeoJohnson(all_predictors()) %>% 
       step_center(all_predictors()) %>% 
       step_scale(all_predictors()),
-    rcp_filter_cor = rcp %>% 
+    rcp_filter_cor = rcp_basic %>% 
       step_corr(all_predictors(), threshold = 0.7),
-    rcp_filter_pca = rcp %>% 
+    rcp_filter_pca = rcp_basic %>% 
       step_pca(all_predictors(), threshold = 0.9)
   )
 
 
 plans$p06_folds <- 
   drake_plan(
-    fr_cor = apply_recipe_to_folds(rcp_filter_cor, raw_folds),
-    fr_pca = apply_recipe_to_folds(rcp_filter_pca, raw_folds)
+    fr_pure = apply_recipe_to_folds(rcp_pure, raw_folds),
+    fr_cor  = apply_recipe_to_folds(rcp_filter_cor, raw_folds),
+    fr_pca  = apply_recipe_to_folds(rcp_filter_pca, raw_folds)
   )
 
 
@@ -59,10 +61,10 @@ metric_profile_per_fold <- function(method, fold, tune_grid, ...) {
   if (is.null(tune_grid)) {
     return(
       data.frame(
-        grid = FALSE, 
         AUC = MLmetrics::AUC(
           y_pred = probs(fit(NULL)), 
-          y_true = fold$assessment$y == 'PS'))
+          y_true = fold$assessment$y == 'PS'),
+      grid = FALSE)
     )
   }
   
@@ -81,6 +83,7 @@ metric_profile_per_fold <- function(method, fold, tune_grid, ...) {
 plans$p07_model_tuning <- 
   drake_plan(
     glm_cor = purrr::map_dfr(fr_cor, function(fold) metric_profile_per_fold("glm", fold, NULL), .id = "fold"),
-    glm_pca = purrr::map_dfr(fr_pca, function(fold) metric_profile_per_fold("glm", fold, NULL), .id = "fold")
+    glm_pca = purrr::map_dfr(fr_pca, function(fold) metric_profile_per_fold("glm", fold, NULL), .id = "fold"),
+    rf_pure = purrr::map_dfr(fr_pure, function(fold) metric_profile_per_fold("rf", fold, tune_grid = data.frame(mtry = c(5, 10, 20, 30, 40, 58))), .id = "fold")
   )
 
