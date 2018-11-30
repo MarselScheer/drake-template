@@ -48,7 +48,7 @@ plans$p05_recipes_2_filter <-
     ) %>% evaluate_plan(
       rules = list(
         filter__ = "step_corr",
-        threshold__ = c(0.5, 0.7, 0.9)
+        threshold__ = c((1:9)/10, 0.95, 0.99)
       ),
       trace = TRUE
     ),
@@ -58,7 +58,7 @@ plans$p05_recipes_2_filter <-
     ) %>% evaluate_plan(
       rules = list(
         filter__ = "step_pca",
-        threshold__ = c(0.8, 0.9, 0.95)
+        threshold__ = c((1:9)/10, 0.95, 0.99)
       ),
       trace = TRUE
     )  
