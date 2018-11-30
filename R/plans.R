@@ -43,24 +43,28 @@ plans$p05_recipes_1_basic <-
 plans$p05_recipes_2_filter <- 
   drake::bind_plans(
     drake_plan(
-      rcp_filter_cor = rcp_basic %>% 
-        step_corr(all_predictors(), threshold = threshold__)
+      rcp_filter = rcp_basic %>% 
+        filter__(all_predictors(), threshold = threshold__)
     ) %>% evaluate_plan(
       rules = list(
+        filter__ = "step_corr",
         threshold__ = c(0.5, 0.7, 0.9)
       ),
       trace = TRUE
     ),
     drake_plan(
-      rcp_filter_pca = rcp_basic %>% 
-        step_pca(all_predictors(), threshold = threshold__)
+      rcp_filter = rcp_basic %>% 
+        filter__(all_predictors(), threshold = threshold__)
     ) %>% evaluate_plan(
       rules = list(
+        filter__ = "step_pca",
         threshold__ = c(0.8, 0.9, 0.95)
       ),
       trace = TRUE
     )  
-  )
+  ) %>% 
+  dplyr::rename(filter = filter__, threshold = threshold__) %>% 
+  dplyr::select(-contains("__from"))
 
 
 plans$p06_folds_1_pure <- 
