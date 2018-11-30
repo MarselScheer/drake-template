@@ -73,16 +73,13 @@ plans$p06_folds_1_pure <-
 plans$p06_folds_1_filter <- 
   drake_plan(
     fr  = apply_recipe_to_folds(rcp__, raw_folds)
-  ) %>% evaluate_plan(
+  ) %>% h.insert_base_plan(
+    base_plan = plans$p05_recipes_2_filter,
+    base_plan_wildcard = "rcp__",
     rules = list(
-      rcp__ = plans$p05_recipes_2_filter$target
     ),
     trace = TRUE
-  ) %>% 
-  dplyr::left_join(
-    dplyr::select(plans$p05_recipes_2_filter, target, threshold = threshold__), 
-    by = c("rcp__" = "target")) %>% 
-  dplyr::select(-contains("rcp__"))
+  )
 
 
 
