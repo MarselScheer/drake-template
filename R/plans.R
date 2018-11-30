@@ -118,15 +118,14 @@ plans$p07_model_tuning_1_glm <-
   ) %>% 
   h.clear__()
 
+all_model_tuning_plans <- drake::bind_plans(
+  plans$p07_model_tuning_1_rf,
+  plans$p07_model_tuning_1_glm)
 
 plans$p08_aggregate <- 
   drake::bind_plans(
-    gather_plan(
-      drake::bind_plans(
-        plans$p07_model_tuning_1_rf,
-        plans$p07_model_tuning_1_glm), 
-      target = "pre_gathered_metric", gather = "h.bind_rows_with_id"),
-    drake_plan(profiles = dplyr::left_join(pre_gathered_metric, dplyr::select(plans$p07_model_tuning, -command)))
+    gather_plan(all_model_tuning_plans, target = "pre_gathered_metric", gather = "h.bind_rows_with_id"),
+    drake_plan(profiles = dplyr::left_join(pre_gathered_metric, dplyr::select(all_model_tuning_plans, -command)))
   )
   
 
