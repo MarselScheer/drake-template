@@ -78,16 +78,16 @@ lowercase_names <- function(df){
 
 #-# helper-functions
 
-h.insert_base_plan <- function(plan, base_plan, base_plan_by, rules = NULL, wildcard = NULL, values = NULL, expand = TRUE, rename = expand, trace = FALSE, columns = "command") {
-  rules[[base_plan_by]] <- base_plan[, "target", drop = TRUE]
+h.insert_base_plan <- function(plan, base_plan, base_plan_wildcard, rules = NULL, wildcard = NULL, values = NULL, expand = TRUE, rename = expand, trace = FALSE, columns = "command") {
+  rules[[base_plan_wildcard]] <- base_plan[, "target", drop = TRUE]
   
   base_plan <- dplyr::select(base_plan, -dplyr::one_of("command"))
   by <- c("target")  
-  names(by) <- base_plan_by
+  names(by) <- base_plan_wildcard
   
   evaluate_plan(plan, rules, wildcard, values, expand, rename, trace, columns) %>% 
     dplyr::left_join(base_plan, by = by) %>% 
-    dplyr::select(-contains(base_plan_by), -contains("__from"))
+    dplyr::select(-contains(base_plan_wildcard), -contains("__from"))
 }
 
 h.clear__ <- function(plan) {
