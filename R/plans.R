@@ -125,7 +125,25 @@ all_model_tuning_plans <- drake::bind_plans(
 plans$p08_aggregate <- 
   drake::bind_plans(
     gather_plan(all_model_tuning_plans, target = "pre_gathered_metric", gather = "h.bind_rows_with_id"),
-    drake_plan(profiles = dplyr::left_join(pre_gathered_metric, dplyr::select(all_model_tuning_plans, -command)))
+    drake_plan(
+      profiles = dplyr::left_join(pre_gathered_metric, dplyr::select(all_model_tuning_plans, -command)),
+      profiles_plot_rf = profiles %>% 
+        dplyr::filter(model == "rf") %>% 
+        dplyr::group_by(mtry) %>% 
+        dplyr::mutate(AUC_mean = mean(AUC), AUC_sd = sd(AUC)) %>% 
+        ggplot(aes(y = AUC, x = mtry)) + 
+        geom_line(aes(group = fold), alpha = 0.2) + 
+        geom_line(aes(y = AUC_mean)) + 
+        geom_errorbar(aes(ymin = AUC_mean - AUC_sd, ymax = AUC_mean + AUC_sd)),
+    profiles_plot_glm = profiles %>% 
+      filter(model == "glm") %>% 
+      dplyr::group_by(filter, threshold) %>% 
+      dplyr::mutate(AUC_mean = mean(AUC), AUC_sd = sd(AUC)) %>% 
+      ggplot(aes(y = AUC, x = threshold, color = filter)) + 
+      geom_line(aes(group = interaction(fold, filter), color = filter), alpha = 0.2) +
+      geom_line(aes(y = AUC_mean, group = filter)) + 
+      geom_errorbar(aes(ymin = AUC_mean - AUC_sd, ymax = AUC_mean + AUC_sd, group = filter))
+      )
   )
   
 
