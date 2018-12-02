@@ -118,9 +118,26 @@ plans$p07_model_tuning_1_glm <-
   ) %>% 
   h.clear__()
 
+
+plans$p07_model_tuning_1_svm <- 
+  drake_plan(
+    m = purrr::map_dfr(rcp__, function(fold) metric_profile_per_fold('model__', fold, NULL, tune_grid = data.frame(.sigma = c(0.005, 0.01, 0.02), .C = 2^seq(-4,4)), prob.model = TRUE), .id = "fold")
+  ) %>% 
+  h.insert_base_plan(
+    base_plan = plans$p06_folds_1_filter,
+    base_plan_wildcard = "rcp__",
+    rules = list(
+      model__ = "svmRadial"
+    ),
+    trace = TRUE
+  ) %>% 
+  h.clear__()
+
+
 all_model_tuning_plans <- drake::bind_plans(
   plans$p07_model_tuning_1_rf,
-  plans$p07_model_tuning_1_glm)
+  plans$p07_model_tuning_1_glm,
+  plans$p07_model_tuning_1_svm)
 
 plans$p08_aggregate <- 
   drake::bind_plans(
@@ -135,6 +152,13 @@ plans$p08_aggregate <-
         geom_line(aes(group = fold), alpha = 0.2) + 
         geom_line(aes(y = AUC_mean)) + 
         geom_errorbar(aes(ymin = AUC_mean - AUC_sd, ymax = AUC_mean + AUC_sd)),
+      plot_svmrbf_profiles = profiles %>% 
+        dplyr::filter(model == "svmRadial") %>% 
+        dplyr::group_by(filter, threshold, .sigma, .C) %>% 
+        dplyr::mutate(AUC_mean = mean(AUC), AUC_sd = sd(AUC)) %>% 
+        ggplot(aes(y = AUC, x = threshold, group = interaction(.C), color = interaction(.C))) + 
+        facet_grid( .sigma ~ filter, labeller = label_both) + 
+        geom_line(aes(y = AUC_mean)),
       plot_glm_profiles = profiles %>% 
         filter(model == "glm") %>% 
         dplyr::group_by(filter, threshold) %>% 
