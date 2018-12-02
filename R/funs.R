@@ -1,3 +1,28 @@
+#-# bayes optimization
+
+bayes_opt_svmrbf <- function(folds, bounds, init_grid_dt = init_grid_dt, n_iter) {
+  FUN <- function(.sigma, .C) {
+    txt <- capture.output(
+      result <- purrr::map_dfr(folds, function(fold) metric_profile_per_fold("svmRadial", fold, tune_grid = data.frame(.sigma = .sigma, .C = .C), prob.model = TRUE))
+    )
+    list(Score = mean(result$AUC), Pred = 0)
+  } 
+
+  init_grid_dt <-
+    init_grid_dt %>% 
+    dplyr::group_by(.sigma, .C) %>% 
+    dplyr::summarise(Value = mean(AUC))
+    
+  rBayesianOptimization::BayesianOptimization(
+    FUN,
+    bounds = bounds,
+    init_grid_dt = init_grid_dt, 
+    init_points = 0,
+    n_iter = n_iter,
+    acq = "ucb", 
+    verbose = TRUE)
+}
+
 #-# tune 
 
 metric_profile_per_fold <- function(method, fold, tune_grid, ...) {
