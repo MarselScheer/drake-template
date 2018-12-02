@@ -170,6 +170,18 @@ plans$p08_aggregate <-
     )
   )
   
-
+plans$p09_bayes_opt <- 
+  drake::drake_plan(
+    m_svmrbf_bayes_opt1 = bayes_opt_svmrbf(
+      folds = fr_rcp_filter_step_pca_0.5, 
+      bounds = list(.sigma = c(0.00001, 0.1), .C = c(0.00001, 64)), 
+      init_grid_dt = m_svmRadial_fr_rcp_filter_step_pca_0.5, 
+      n_iter = 5),
+    m_svmrbf_bayes_opt2 = bayes_opt_svmrbf(
+      folds = fr_rcp_filter_step_pca_0.5, 
+      bounds = list(.sigma = c(0.00001, 0.1), .C = c(0.00001, 64)), 
+      init_grid_dt = m_svmrbf_bayes_opt1$History, 
+      n_iter = 5)
+  )
 plans
 
