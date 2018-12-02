@@ -116,3 +116,7 @@ h.bind_rows_with_id <- function(...) dplyr::bind_rows(..., .id = "target")
 
 h.pj <- function(rcp) recipes::juice(recipes::prep(rcp, retain = TRUE))
 h.ad <- as.data.frame
+
+h.ls <- function(pattern = "") {
+  grep(pattern, drake::cached(), value = TRUE)
+}
