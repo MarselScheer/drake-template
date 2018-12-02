@@ -13,7 +13,8 @@ bayes_opt_svmrbf <- function(folds, bounds, init_grid_dt = init_grid_dt, n_iter)
     dplyr::group_by(.sigma, .C) %>% 
     dplyr::summarise(Value = mean(AUC))
     
-  rBayesianOptimization::BayesianOptimization(
+  ret <- 
+    rBayesianOptimization::BayesianOptimization(
     FUN,
     bounds = bounds,
     init_grid_dt = init_grid_dt, 
@@ -21,6 +22,9 @@ bayes_opt_svmrbf <- function(folds, bounds, init_grid_dt = init_grid_dt, n_iter)
     n_iter = n_iter,
     acq = "ucb", 
     verbose = TRUE)
+  
+  ret$History <- dplyr::rename(ret$History, AUC = Value)
+  ret
 }
 
 #-# tune 
