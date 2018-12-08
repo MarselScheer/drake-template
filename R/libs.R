@@ -1,5 +1,7 @@
+library(visNetwork)
+library(randomForest)
+library(MLmetrics)
 library(kernlab)
-library(parsnip)
 library(e1071)
 library(corrr)
 library(corrplot)
@@ -17,6 +19,7 @@ library(glue)
 library(vtreat)
 library(funModeling)
 library(drake)
+
 flog.info("libs loaded")
 
 

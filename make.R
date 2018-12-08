@@ -14,12 +14,12 @@ plan <- h.add_list_name_as_column(sub_plans) %>%
 
 sub_plan <- plan 
 
-config <- drake_config(sub_plan)
+config <- drake_config(sub_plan, cache_log_file = "cache_log.txt")
 vis_drake_graph(config) %>% print
 
 
 flog.info("run plan")
-make(sub_plan, cache_log_file = "cache_log.txt")
+make(sub_plan, cache_log_file = "cache_log.txt")#, jobs = 7, seed = 123456)
 
 #readd(d)$train %>% 
 #  dplyr::as_tibble() %>% 
