@@ -63,7 +63,7 @@ apply_recipe_to_folds <- function(rcp, folds){
     folds,
     function(f){
       rcp <- recipes::prep(rcp, training = f$analysis, retain = TRUE)
-      list(analysis = recipes::juice(rcp), assessment = recipes::bake(rcp, newdata = f$assessment))
+      list(analysis = recipes::juice(rcp), assessment = recipes::bake(rcp, new_data = f$assessment))
     }
   )
 }
