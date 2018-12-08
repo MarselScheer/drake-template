@@ -6,6 +6,9 @@ source("R/libs.R")
 source("R/funs.R")
 source("R/plans.R")
 
+if (!dir.exists("reports")) {
+  dir.create("reports", mode = "0755")  
+}
 
 sub_plans <- plans#[1:3]
 flog.info(glue::glue("bind plans: {paste(sort(names(sub_plans)), collapse = ', ')}"))
