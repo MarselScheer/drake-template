@@ -1,5 +1,11 @@
 plans <- list()
 
+get_segmentation_data <- function() {
+  data("segmentationData", package = "caret")
+  return(segmentationData)
+}
+
+
 plans$p01_import <- 
   drake_plan(
     r = lowercase_names(dplyr::rename(get_segmentation_data(), .set = Case))

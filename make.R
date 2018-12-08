@@ -18,11 +18,6 @@ config <- drake_config(sub_plan)
 vis_drake_graph(config) %>% print
 
 
-
-get_segmentation_data <- function() {
-  data("segmentationData", package = "caret")
-  return(segmentationData)
-}
 flog.info("run plan")
 make(sub_plan, cache_log_file = "cache_log.txt")
 
