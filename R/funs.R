@@ -86,6 +86,11 @@ wrangle <- function(df){
 
 #-# data import
 
+get_segmentation_data <- function() {
+  data("segmentationData", package = "caret")
+  return(segmentationData)
+}
+
 load_fname <- function(fname, .set){
   flog.info(glue::glue("load {fname} and label it as {.set}"))
   suppressMessages(

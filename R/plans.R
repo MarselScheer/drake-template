@@ -1,10 +1,5 @@
 plans <- list()
 
-get_segmentation_data <- function() {
-  data("segmentationData", package = "caret")
-  return(segmentationData)
-}
-
 
 plans$p01_import <- 
   drake_plan(
