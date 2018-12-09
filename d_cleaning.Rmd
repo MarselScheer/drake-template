@@ -16,7 +16,7 @@ suppressMessages(source("./R/libs.R"))
 source("./R/funs.R")
 
 train <- readd(d)$train
-all <- h.add_list_name_as_column(readd(d))
+all <- dplyr::bind_rows(readd(d), .id = "df_name")
 ```
 
 # df_status

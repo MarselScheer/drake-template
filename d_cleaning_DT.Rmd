@@ -19,7 +19,7 @@ source("./R/funs.R")
 # df_status
 
 ```{r, echo=FALSE}
-all <- h.add_list_name_as_column(readd(d))
+all <- dplyr::bind_rows(readd(d), .id = "df_name")
 funModeling::df_status(all, print_results = FALSE) %>% 
   DT::datatable(options = list(pageLength = 100))
 ```
