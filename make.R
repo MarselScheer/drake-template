@@ -15,11 +15,12 @@ flog.info(glue::glue("bind plans: {paste(sort(names(sub_plans)), collapse = ', '
 plan <- h.add_list_name_as_column(sub_plans) %>% 
   dplyr::arrange(df_name)
 
-sub_plan <- plan 
+sub_plan <- 
+  plan %>% 
+  h.minimal_plan(c("m_svmrbf_bayes_opt2", "m_rf_fr_pure"))
 
 config <- drake_config(sub_plan, cache_log_file = "cache_log.txt")
-vis_drake_graph(config) %>% print
-
+vis_drake_graph(config, targets_only = TRUE) %>% print
 
 flog.info("run plan")
 make(sub_plan, cache_log_file = "cache_log.txt")#, jobs = 7, seed = 123456)
