@@ -1,3 +1,9 @@
+#-# final model
+
+final_model <- function(method, recipe, data, trControl = trainControl(method = "none"), ...) {
+  caret::train(recipe, method = method, data = data, trControl = trControl, ...)
+}
+
 #-# bayes optimization
 
 bayes_opt_svmrbf <- function(folds, bounds, init_grid_dt = init_grid_dt, n_iter) {

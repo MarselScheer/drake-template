@@ -184,5 +184,13 @@ plans$p09_bayes_opt <-
       init_grid_dt = m_svmrbf_bayes_opt1$History, 
       n_iter = 5)
   )
+
+plans$p10_final_models <- 
+  drake::drake_plan(
+    m_final_rf = final_model("rf", rcp_pure, data = d$train),
+    m_final_glm = final_model("glm", rcp_filter_step_corr_0.7, data = d$train),
+    m_final_svm = final_model("svmRadial", rcp_filter_step_pca_0.5, data = d$train, tuneGrid = data.frame(.sigma = 0.06169672, .C = 11.04782256))
+  )
+
 plans
 
