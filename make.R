@@ -19,7 +19,7 @@ plan <-
 
 sub_plan <- 
   plan %>% 
-#  h.minimal_plan(c("m_svmrbf_bayes_opt2", "m_rf_fr_pure")) %>% 
+  h.minimal_plan(h.ls("m_final")) %>% 
   identity()
 
 config <- drake_config(sub_plan, cache_log_file = "cache_log.txt")
