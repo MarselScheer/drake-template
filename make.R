@@ -19,14 +19,14 @@ plan <-
 
 sub_plan <- 
   plan %>% 
-  h.minimal_plan(h.ls("m_final")) %>% 
+  h.minimal_plan(grep("m_final", plan$target, value = TRUE)) %>% 
   identity()
 
 config <- drake_config(sub_plan, cache_log_file = "cache_log.txt")
 vis_drake_graph(config, targets_only = TRUE) %>% print
 
 flog.info("run plan")
-make(sub_plan, cache_log_file = "cache_log.txt")#, jobs = 7, seed = 123456)
+make(sub_plan, cache_log_file = "cache_log.txt", jobs = 7, seed = 123456)
 
 #readd(d)$train %>% 
 #  dplyr::as_tibble() %>% 
