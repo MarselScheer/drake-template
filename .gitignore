@@ -1,5 +1,8 @@
 .drake/
+reports/*html
+reports/*files/
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
+
