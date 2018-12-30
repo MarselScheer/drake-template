@@ -1,12 +1,19 @@
 #-# final model
 
 final_model <- function(method, recipe, data, trControl = trainControl(method = "none"), ...) {
-  caret::train(recipe, method = method, data = data, trControl = trControl, ...)
+  h.log_start()
+  
+  ret <- caret::train(recipe, method = method, data = data, trControl = trControl, ...)
+  
+  h.log_end()
+  ret
 }
 
 #-# bayes optimization
 
 bayes_opt_svmrbf <- function(folds, bounds, init_grid_dt = init_grid_dt, n_iter) {
+  h.log_start()
+  
   FUN <- function(.sigma, .C) {
     txt <- capture.output(
       result <- purrr::map_dfr(folds, function(fold) metric_profile_per_fold("svmRadial", fold, tune_grid = data.frame(.sigma = .sigma, .C = .C), prob.model = TRUE))
@@ -30,12 +37,15 @@ bayes_opt_svmrbf <- function(folds, bounds, init_grid_dt = init_grid_dt, n_iter)
     verbose = TRUE)
   
   ret$History <- dplyr::rename(ret$History, AUC = Value)
+  
+  h.log_end()
   ret
 }
 
 #-# tune 
 
 metric_profile_per_fold <- function(method, fold, tune_grid, ...) {
+  h.log_start()
   
   fit <- function(tg_row) caret::train(y ~., method = method, data = fold$analysis, tuneGrid = tg_row, trControl = trainControl(method = "none"), ...)
   probs <- function(model) caret::predict.train(model, newdata = fold$assessment, type = 'prob')$PS
@@ -58,6 +68,8 @@ metric_profile_per_fold <- function(method, fold, tune_grid, ...) {
       y_true = fold$assessment$y == 'PS')
   }
   ret$grid <- TRUE
+  
+  h.log_end()
   ret
 }
 
@@ -65,35 +77,50 @@ metric_profile_per_fold <- function(method, fold, tune_grid, ...) {
 #-# recipe and folds
 
 apply_recipe_to_folds <- function(rcp, folds){
-  purrr::map(
+  h.log_start()
+  
+  ret <- purrr::map(
     folds,
     function(f){
       rcp <- recipes::prep(rcp, training = f$analysis, retain = TRUE)
       list(analysis = recipes::juice(rcp), assessment = recipes::bake(rcp, new_data = f$assessment))
     }
   )
+  
+  h.log_end()
+  ret
 }
 
 
 #-# wrangle 
 
 wrangle <- function(df){
+  h.log_start()
+  
   df <- df %>% 
     dplyr::rename(y = class) %>% 
     dplyr::mutate(.set = tolower(.set)) %>% 
     h.y_as_first_col()
   
   
-   df %>% 
+  ret <- 
+    df %>% 
     split(.$.set) %>% 
     lapply(function(d) dplyr::select(d, -.set))
+  
+  h.log_end()
+  ret
 }
 
 
 #-# data import
 
 get_segmentation_data <- function() {
+  h.log_start()
+  
   data("segmentationData", package = "caret")
+  
+  h.log_end()
   return(segmentationData)
 }
 
@@ -126,12 +153,16 @@ h.lowercase_names <- function(df){
 h.log_start = function(){
   mc <- sys.call(sys.parent())
   mc <- capture.output(print(mc))
-  flog.info(glue::glue("Start {mc}"))
+  mc <- paste0(trimws(mc), collapse = " ")
+  
+  flog.info(glue::glue("start {mc}"))
 }
 h.log_end = function(){
   mc <- sys.call(sys.parent())
   mc <- capture.output(print(mc))
-  flog.info(glue::glue("End {mc}"))
+  mc <- paste0(trimws(mc), collapse = " ")
+  
+  flog.info(glue::glue("end {mc}"))
 }
 
 h.plan_to_source <- function(plan) {
