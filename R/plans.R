@@ -3,7 +3,7 @@ plans <- list()
 
 plans$p01_import <- 
   drake_plan(
-    r = lowercase_names(dplyr::rename(get_segmentation_data(), .set = Case))
+    r = h.lowercase_names(dplyr::rename(get_segmentation_data(), .set = Case))
   ) 
 flog.info("import defined")
 

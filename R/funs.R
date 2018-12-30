@@ -97,16 +97,23 @@ get_segmentation_data <- function() {
   return(segmentationData)
 }
 
-load_fname <- function(fname, .set){
-  flog.info(glue::glue("load {fname} and label it as {.set}"))
-  suppressMessages(
+load_set = function(fname, .set){
+  h.log_start()
+  
+  ret <- suppressMessages(
     readr::read_csv(fname) %>%
       mutate(.set = .set) %>% 
-      lowercase_names
+      h.lowercase_names
   )
+  
+  h.log_end()
+  ret
 }
 
-lowercase_names <- function(df){
+
+#-# helper-functions
+
+h.lowercase_names <- function(df){
   lc <- tolower(names(df))
   if (anyDuplicated(lc) > 0) {
     stop("lowercase varnames makes names ambiguous")
@@ -114,9 +121,6 @@ lowercase_names <- function(df){
   names(df) <- lc
   df
 }
-
-
-#-# helper-functions
 
 
 h.log_start = function(){
