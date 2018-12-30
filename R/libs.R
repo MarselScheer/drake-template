@@ -24,4 +24,4 @@ library(drake)
 flog.info("libs loaded")
 
 
-pkgconfig::set_config("drake::strings_in_dots" = "literals")
+

@@ -3,6 +3,8 @@ rm(list = ls())
 VFOLDS <- 2
 
 source("R/libs.R")
+pkgconfig::set_config("drake::strings_in_dots" = "literals")
+
 source("R/funs.R")
 source("R/plans.R")
 
