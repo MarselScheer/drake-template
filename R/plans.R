@@ -88,7 +88,12 @@ plans$p06_folds_1_filter <-
 
 plans$p07_model_tuning_1_rf <- 
   drake_plan(
-    m = purrr::map_dfr(rcp__, function(fold) metric_profile_per_fold('model__', fold, tune_grid = data.frame(mtry = c(5, 10, 20, 30, 40, 58))), .id = "fold")
+    m = purrr::map_dfr(rcp__, function(fold) 
+      metric_profile_per_fold(
+        method = 'model__', 
+        fold = fold, 
+        tune_grid = data.frame(mtry = c(5, 10, 20, 30, 40, 58))), 
+      .id = "fold")
   ) %>% 
   h.insert_base_plan(
     base_plan = plans$p06_folds_1_pure,
@@ -105,7 +110,12 @@ plans$p07_model_tuning_1_rf <-
 
 plans$p07_model_tuning_1_glm <- 
   drake_plan(
-    m = purrr::map_dfr(rcp__, function(fold) metric_profile_per_fold('model__', fold, NULL), .id = "fold")
+    m = purrr::map_dfr(rcp__, function(fold) 
+      metric_profile_per_fold(
+        method = 'model__', 
+        fold = fold, 
+        tune_grid = NULL), 
+      .id = "fold")
   ) %>% 
   h.insert_base_plan(
     base_plan = plans$p06_folds_1_filter,
@@ -120,7 +130,13 @@ plans$p07_model_tuning_1_glm <-
 
 plans$p07_model_tuning_1_svm <- 
   drake_plan(
-    m = purrr::map_dfr(rcp__, function(fold) metric_profile_per_fold('model__', fold, NULL, tune_grid = data.frame(.sigma = c(0.005, 0.01, 0.02), .C = 2^seq(-4,4)), prob.model = TRUE), .id = "fold")
+    m = purrr::map_dfr(rcp__, function(fold) 
+      metric_profile_per_fold(
+        method = 'model__', 
+        fold = fold, 
+        tune_grid = data.frame(.sigma = c(0.005, 0.01, 0.02), .C = 2^seq(-4,4)), 
+        prob.model = TRUE), 
+      .id = "fold")
   ) %>% 
   h.insert_base_plan(
     base_plan = plans$p06_folds_1_filter,
