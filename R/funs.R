@@ -2,9 +2,9 @@
 
 final_model <- function(method, recipe, data, trControl = trainControl(method = "none"), ...) {
   h.log_start()
-  
+
   ret <- caret::train(recipe, method = method, data = data, trControl = trControl, ...)
-  
+
   h.log_end()
   ret
 }
@@ -13,31 +13,32 @@ final_model <- function(method, recipe, data, trControl = trainControl(method = 
 
 bayes_opt_svmrbf <- function(folds, bounds, init_grid_dt = init_grid_dt, n_iter) {
   h.log_start()
-  
+
   FUN <- function(.sigma, .C) {
     txt <- capture.output(
       result <- purrr::map_dfr(folds, function(fold) metric_profile_per_fold("svmRadial", fold, tune_grid = data.frame(.sigma = .sigma, .C = .C), prob.model = TRUE))
     )
     list(Score = mean(result$AUC), Pred = 0)
-  } 
+  }
 
   init_grid_dt <-
-    init_grid_dt %>% 
-    dplyr::group_by(.sigma, .C) %>% 
+    init_grid_dt %>%
+    dplyr::group_by(.sigma, .C) %>%
     dplyr::summarise(Value = mean(AUC))
-    
-  ret <- 
+
+  ret <-
     rBayesianOptimization::BayesianOptimization(
-    FUN,
-    bounds = bounds,
-    init_grid_dt = init_grid_dt, 
-    init_points = 0,
-    n_iter = n_iter,
-    acq = "ucb", 
-    verbose = TRUE)
-  
+      FUN,
+      bounds = bounds,
+      init_grid_dt = init_grid_dt,
+      init_points = 0,
+      n_iter = n_iter,
+      acq = "ucb",
+      verbose = TRUE
+    )
+
   ret$History <- dplyr::rename(ret$History, AUC = Value)
-  
+
   h.log_end()
   ret
 }
@@ -46,29 +47,32 @@ bayes_opt_svmrbf <- function(folds, bounds, init_grid_dt = init_grid_dt, n_iter)
 
 metric_profile_per_fold <- function(method, fold, tune_grid, ...) {
   h.log_start()
-  
-  fit <- function(tg_row) caret::train(y ~., method = method, data = fold$analysis, tuneGrid = tg_row, trControl = trainControl(method = "none"), ...)
-  probs <- function(model) caret::predict.train(model, newdata = fold$assessment, type = 'prob')$PS
-  
+
+  fit <- function(tg_row) caret::train(y ~ ., method = method, data = fold$analysis, tuneGrid = tg_row, trControl = trainControl(method = "none"), ...)
+  probs <- function(model) caret::predict.train(model, newdata = fold$assessment, type = "prob")$PS
+
   if (is.null(tune_grid)) {
     return(
       data.frame(
         AUC = MLmetrics::AUC(
-          y_pred = probs(fit(NULL)), 
-          y_true = fold$assessment$y == 'PS'),
-        grid = FALSE)
+          y_pred = probs(fit(NULL)),
+          y_true = fold$assessment$y == "PS"
+        ),
+        grid = FALSE
+      )
     )
   }
-  
+
   ret <- tune_grid
   ret$AUC <- NA
   for (row in 1:nrow(tune_grid)) {
     ret$AUC[row] <- MLmetrics::AUC(
-      y_pred = probs(fit(tune_grid[row, , drop = FALSE])), 
-      y_true = fold$assessment$y == 'PS')
+      y_pred = probs(fit(tune_grid[row, , drop = FALSE])),
+      y_true = fold$assessment$y == "PS"
+    )
   }
   ret$grid <- TRUE
-  
+
   h.log_end()
   ret
 }
@@ -76,17 +80,17 @@ metric_profile_per_fold <- function(method, fold, tune_grid, ...) {
 
 #-# recipe and folds
 
-apply_recipe_to_folds <- function(rcp, folds){
+apply_recipe_to_folds <- function(rcp, folds) {
   h.log_start()
-  
+
   ret <- purrr::map(
     folds,
-    function(f){
+    function(f) {
       rcp <- recipes::prep(rcp, training = f$analysis, retain = TRUE)
       list(analysis = recipes::juice(rcp), assessment = recipes::bake(rcp, new_data = f$assessment))
     }
   )
-  
+
   h.log_end()
   ret
 }
@@ -94,20 +98,20 @@ apply_recipe_to_folds <- function(rcp, folds){
 
 #-# wrangle 
 
-wrangle <- function(df){
+wrangle <- function(df) {
   h.log_start()
-  
-  df <- df %>% 
-    dplyr::rename(y = class) %>% 
-    dplyr::mutate(.set = tolower(.set)) %>% 
+
+  df <- df %>%
+    dplyr::rename(y = class) %>%
+    dplyr::mutate(.set = tolower(.set)) %>%
     h.y_as_first_col()
-  
-  
-  ret <- 
-    df %>% 
-    split(.$.set) %>% 
+
+
+  ret <-
+    df %>%
+    split(.$.set) %>%
     lapply(function(d) dplyr::select(d, -.set))
-  
+
   h.log_end()
   ret
 }
@@ -117,22 +121,22 @@ wrangle <- function(df){
 
 get_segmentation_data <- function() {
   h.log_start()
-  
+
   data("segmentationData", package = "caret")
-  
+
   h.log_end()
   return(segmentationData)
 }
 
-load_set = function(fname, .set){
+load_set <- function(fname, .set) {
   h.log_start()
-  
+
   ret <- suppressMessages(
     readr::read_csv(fname) %>%
-      mutate(.set = .set) %>% 
-      h.lowercase_names
+      mutate(.set = .set) %>%
+      h.lowercase_names()
   )
-  
+
   h.log_end()
   ret
 }
@@ -140,7 +144,7 @@ load_set = function(fname, .set){
 
 #-# helper-functions
 
-h.lowercase_names <- function(df){
+h.lowercase_names <- function(df) {
   lc <- tolower(names(df))
   if (anyDuplicated(lc) > 0) {
     stop("lowercase varnames makes names ambiguous")
@@ -150,25 +154,25 @@ h.lowercase_names <- function(df){
 }
 
 
-h.log_start = function(){
+h.log_start <- function() {
   mc <- sys.call(sys.parent())
   mc <- capture.output(print(mc))
   mc <- paste0(trimws(mc), collapse = " ")
-  
+
   flog.info(glue::glue("start {mc}"))
 }
-h.log_end = function(){
+h.log_end <- function() {
   mc <- sys.call(sys.parent())
   mc <- capture.output(print(mc))
   mc <- paste0(trimws(mc), collapse = " ")
-  
+
   flog.info(glue::glue("end {mc}"))
 }
 
 h.plan_to_source <- function(plan) {
-  fName = "plan_as_plain.R"
+  fName <- "plan_as_plain.R"
   drake::plan_to_code(plan, con = fName)
-  
+
   code <- c(readLines("./R/libs.R"), readLines("./R/funs.R"), readLines(fName))
 
   writeLines(code, con = fName)
@@ -181,24 +185,24 @@ h.necessary_targets <- function(config, target) {
 
 h.minimal_plan <- function(plan, targets) {
   config <- drake_config(plan)
-  
-  all_necessary_targets <- purrr::map(targets, purrr::partial(h.necessary_targets, config = config)) %>% 
-    unlist() %>% 
+
+  all_necessary_targets <- purrr::map(targets, purrr::partial(h.necessary_targets, config = config)) %>%
+    unlist() %>%
     unique()
-  
-  plan %>% 
+
+  plan %>%
     dplyr::filter(target %in% all_necessary_targets)
 }
 
 h.insert_base_plan <- function(plan, base_plan, base_plan_wildcard, rules = NULL, wildcard = NULL, values = NULL, expand = TRUE, rename = expand, trace = FALSE, columns = "command") {
   rules[[base_plan_wildcard]] <- base_plan[, "target", drop = TRUE]
-  
+
   base_plan <- dplyr::select(base_plan, -dplyr::one_of("command"))
-  by <- c("target")  
+  by <- c("target")
   names(by) <- base_plan_wildcard
-  
-  evaluate_plan(plan, rules, wildcard, values, expand, rename, trace, columns) %>% 
-    dplyr::left_join(base_plan, by = by) %>% 
+
+  evaluate_plan(plan, rules, wildcard, values, expand, rename, trace, columns) %>%
+    dplyr::left_join(base_plan, by = by) %>%
     dplyr::select(-contains(base_plan_wildcard), -contains("__from"))
 }
 
