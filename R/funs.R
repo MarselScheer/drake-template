@@ -118,6 +118,28 @@ lowercase_names <- function(df){
 
 #-# helper-functions
 
+
+h.log_start = function(){
+  mc <- sys.call(sys.parent())
+  mc <- capture.output(print(mc))
+  flog.info(glue::glue("Start {mc}"))
+}
+h.log_end = function(){
+  mc <- sys.call(sys.parent())
+  mc <- capture.output(print(mc))
+  flog.info(glue::glue("End {mc}"))
+}
+
+h.plan_to_source <- function(plan) {
+  fName = "plan_as_plain.R"
+  drake::plan_to_code(plan, con = fName)
+  
+  code <- c(readLines("./R/libs.R"), readLines("./R/funs.R"), readLines(fName))
+
+  writeLines(code, con = fName)
+}
+
+
 h.necessary_targets <- function(config, target) {
   drake_graph_info(config, from = target, mode = "in", targets_only = TRUE)$nodes$id
 }
