@@ -166,6 +166,28 @@ h.send_pushbullet <- function(msg, title = basename(getwd())) {
   }
 }
 
+h.send_plot_pushbullet <- function(p, title = basename(getwd())){
+  # pushbullet notifications can only be send
+  # if ~/.rpushbullet.json exist
+  # should follow
+  #{
+  #  "key": "..key.."
+  #}
+  #RPushbullet::pbSetup("..key..") can also be used
+  #to generate the json-file.
+  
+  
+  fName <- glue::glue("{tempfile()}.jpg")
+  ggsave(fName, plot = p)
+  try(RPushbullet::pbPost(
+    type = "file",
+    title = title,
+    body = "body",
+    url = fName)
+  )
+}
+
+
 h.lowercase_names <- function(df) {
   lc <- tolower(names(df))
   if (anyDuplicated(lc) > 0) {
