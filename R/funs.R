@@ -145,12 +145,24 @@ load_set <- function(fname, .set) {
 #-# helper-functions
 
 h.send_pushbullet <- function(msg, title = basename(getwd())) {
+  
+  # pushbullet notifications can only be send
+  # if ~/.rpushbullet.json exist
+  # should follow
+  #{
+  #  "key": "..key.."
+  #}
+  #RPushbullet::pbSetup("..key..") can also be used
+  #to generate the json-file.
+  
+  
   if (!interactive()) {
     try(RPushbullet::pbPost(
       type = "note", 
       title = title, 
-      body = glue::glue("{format(Sys.time(), '%Y-%m-%d %H:%M')}\n{msg}"), 
-      apikey = RPushbullet:::.getKey()[[1]]))  
+      body = glue::glue("{format(Sys.time(), '%Y-%m-%d %H:%M')}\n{msg}")
+      )
+    )
   }
 }
 
