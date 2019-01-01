@@ -144,6 +144,16 @@ load_set <- function(fname, .set) {
 
 #-# helper-functions
 
+h.send_pushbullet <- function(msg, title = basename(getwd())) {
+  if (!interactive()) {
+    try(RPushbullet::pbPost(
+      type = "note", 
+      title = title, 
+      body = glue::glue("{format(Sys.time(), '%Y-%m-%d %H:%M')}\n{msg}"), 
+      apikey = RPushbullet:::.getKey()[[1]]))  
+  }
+}
+
 h.lowercase_names <- function(df) {
   lc <- tolower(names(df))
   if (anyDuplicated(lc) > 0) {
@@ -154,19 +164,27 @@ h.lowercase_names <- function(df) {
 }
 
 
-h.log_start <- function() {
+h.log_start <- function(send_pushbullet = FALSE) {
   mc <- sys.call(sys.parent())
   mc <- capture.output(print(mc))
   mc <- paste0(trimws(mc), collapse = " ")
-
-  flog.info(glue::glue("start {mc}"))
+  
+  msg <- glue::glue("start {mc}")
+  if (send_pushbullet) {
+    h.send_pushbullet(msg)
+  }
+  flog.info(msg)
 }
-h.log_end <- function() {
+h.log_end <- function(send_pushbullet = FALSE) {
   mc <- sys.call(sys.parent())
   mc <- capture.output(print(mc))
   mc <- paste0(trimws(mc), collapse = " ")
 
-  flog.info(glue::glue("end {mc}"))
+  msg <- glue::glue("end {mc}")
+  if (send_pushbullet) {
+    h.send_pushbullet(msg)
+  }
+  flog.info(msg)
 }
 
 h.plan_to_source <- function(plan) {
