@@ -144,7 +144,7 @@ load_set <- function(fname, .set) {
 
 #-# helper-functions
 
-h.send_pushbullet <- function(msg, title = basename(getwd())) {
+h.send_pushbullet <- function(msg, title = NULL) {
   
   # pushbullet notifications can only be send
   # if ~/.rpushbullet.json exist
@@ -154,19 +154,22 @@ h.send_pushbullet <- function(msg, title = basename(getwd())) {
   #}
   #RPushbullet::pbSetup("..key..") can also be used
   #to generate the json-file.
-  
-  
-  if (!interactive()) {
-    try(RPushbullet::pbPost(
-      type = "note", 
-      title = title, 
-      body = glue::glue("{format(Sys.time(), '%Y-%m-%d %H:%M')}\n{msg}")
-      )
-    )
+  if (interactive()) {
+    return()
   }
+  
+  if (is.null(title)) {
+    title = glue::glue("{Sys.info()['nodename']}: {basename(getwd())}")
+  }
+  
+  try(RPushbullet::pbPost(
+    type = "note", 
+    title = title, 
+    body = glue::glue("{format(Sys.time(), '%Y-%m-%d %H:%M')}\n{msg}")
+  ))
 }
 
-h.send_plot_pushbullet <- function(p, title = basename(getwd())){
+h.send_plot_pushbullet <- function(p, title = NULL){
   # pushbullet notifications can only be send
   # if ~/.rpushbullet.json exist
   # should follow
@@ -175,14 +178,20 @@ h.send_plot_pushbullet <- function(p, title = basename(getwd())){
   #}
   #RPushbullet::pbSetup("..key..") can also be used
   #to generate the json-file.
+
+  if (interactive()) {
+    return()
+  }
   
+  if (is.null(title)) {
+    title = glue::glue("{Sys.info()['nodename']}: {basename(getwd())}")
+  }
   
   fName <- glue::glue("{tempfile()}.jpg")
-  ggsave(fName, plot = p)
+  ggplot2::ggsave(fName, plot = p)
   try(RPushbullet::pbPost(
     type = "file",
-    title = title,
-    body = "body",
+    body = title, # title parameter does not work but body at the top and looks quite like title.
     url = fName)
   )
 }
