@@ -286,6 +286,15 @@ h.bind_rows_with_id <- function(..., .id = "target") dplyr::bind_rows(..., .id =
 h.pj <- function(rcp) recipes::juice(recipes::prep(rcp, retain = TRUE))
 h.ad <- as.data.frame
 
+h.loadd_plan <- function(plan) {
+  
+  cat(glue::glue("Loading: {paste0(plan$target, collapse = ', ')}"))
+  for (target in plan$target) {
+    value <- do.call("readd", list(target = target))
+    do.call("assign", list(x = target, value = value, envir = globalenv()))
+  }
+}
+
 h.ls <- function(pattern = "") {
   grep(pattern, drake::cached(), value = TRUE)
 }
