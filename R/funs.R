@@ -281,6 +281,49 @@ h.y_as_first_col <- function(df) {
   df[, c("y", setdiff(names(df), "y"))]
 }
 
+
+h.create_caption_txt <- function(desc, author, analysis_unique_id) {
+  glue("{desc}
+       {author}
+       {analysis_unique_id}
+       {date()}")
+}
+
+h.plot_info <- function(desc, author, analysis_unique_id) {
+  ggplot2::labs(caption = h.create_caption_txt(desc, author, analysis_unique_id))
+}
+
+h.plot_info_font_size <- function(font.size) {
+  ggplot2::theme(plot.caption = element_text(size = font.size))
+}
+
+h.html_to_human_readable <- function(s) {
+  s <- gsub("&#124;", "  or  ", s, fixed = TRUE)
+  s
+}
+
+h.annotate_with_df <- function(df, position = c("top-left", "top-right", "bottom-left", "bottom-right"), size = 3) {
+  df_str <- knitr::kable(df) %>%
+    as.character() %>%
+    h.html_to_human_readable() %>%
+    paste(collapse = "\n")
+  
+  position <- match.arg(position)
+  
+  if (position == "top-left") {
+    return(ggplot2::annotate("text", x = -Inf, y = Inf, hjust = 0, vjust = 1, label = df_str, family = "mono", size = size))
+  } else if (position == "top-right") {
+    return(ggplot2::annotate("text", x = Inf, y = Inf, hjust = 1, vjust = 1, label = df_str, family = "mono", size = size))
+  } else if (position == "bottom-left") {
+    return(ggplot2::annotate("text", x = -Inf, y = -Inf, hjust = 0, vjust = 0, label = df_str, family = "mono", size = size))
+  } else if (position == "bottom-right") {
+    return(ggplot2::annotate("text", x = Inf, y = -Inf, hjust = 1, vjust = 0, label = df_str, family = "mono", size = size))
+  }
+  stop("position unknown")
+}
+
+
+
 h.bind_rows_with_id <- function(..., .id = "target") dplyr::bind_rows(..., .id = .id)
 
 h.pj <- function(rcp) recipes::juice(recipes::prep(rcp, retain = TRUE))
