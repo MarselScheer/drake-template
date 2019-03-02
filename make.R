@@ -36,7 +36,9 @@ sub_plan <-
 h.plan_to_source(sub_plan)
 
 config <- drake_config(sub_plan, cache_log_file = "cache_log.txt")
+vis_drake_graph(config)
 vis_drake_graph(config, targets_only = TRUE) %>% print()
+
 
 flog.info("start plan")
 make(sub_plan, cache_log_file = "cache_log.txt") # , jobs = 7, seed = 123456)
