@@ -1,0 +1,31 @@
+---
+title: "Report Template"
+author: '`r readd(AUTHOR)`'
+date: '`r Sys.Date()`, Analysis ID `r readd(ANALYSIS_UNIQUE_ID)`'
+output:
+  slidy_presentation: default
+  html_document: default
+---
+
+# Slide 1
+
+```{r echo=FALSE, results='asis'}
+source(file_in("./R/rmd_prep.R"))
+```
+
+```{r, echo=FALSE}
+suppressMessages(source("./R/libs.R"))
+source("./R/funs.R")
+```
+
+* abc
+
+# Slide 2
+
+* xyz
+
+# sessionInfo
+
+```{r, echo=FALSE}
+sessionInfo()
+```
