@@ -7,17 +7,18 @@ output:
 ---
 
 ```{r echo=FALSE, results='asis'}
-source("./R/rmd_prep.R")
+source(file_in("./R/rmd_prep.R"))
 ```
 
 
 ```{r, echo=FALSE}
-suppressMessages(source("./R/libs.R"))
-source("./R/funs.R")
+suppressMessages(source(file_in("./R/libs.R")))
+source(file_in("./R/funs.R"))
 
 train <- readd(d)$train
 loadd(d_cor)
 ```
+
 
 # cor
 

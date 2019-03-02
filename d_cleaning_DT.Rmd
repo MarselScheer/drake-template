@@ -8,18 +8,25 @@ output:
 
 
 ```{r echo=FALSE, results='asis'}
-source("./R/rmd_prep.R")
+source(file_in("./R/rmd_prep.R"))
 ```
 
 ```{r, echo=FALSE}
-suppressMessages(source("./R/libs.R"))
-source("./R/funs.R")
+suppressMessages(source(file_in("./R/libs.R")))
+source(file_in("./R/funs.R"))
 ```
+
+# Basic information
+
+```{r, echo = FALSE}
+all <- dplyr::bind_rows(readd(d), .id = "df_name")
+DataExplorer::plot_intro(all)
+```
+
 
 # df_status
 
 ```{r, echo=FALSE}
-all <- dplyr::bind_rows(readd(d), .id = "df_name")
 funModeling::df_status(all, print_results = FALSE) %>% 
   DT::datatable(options = list(pageLength = 100))
 ```
