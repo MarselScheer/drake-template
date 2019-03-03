@@ -1,3 +1,8 @@
+library(rBayesianOptimization)
+library(skimr)
+library(styler)
+library(RPushbullet)
+library(DT)
 library(DataExplorer)
 library(tidytext)
 library(visNetwork)
