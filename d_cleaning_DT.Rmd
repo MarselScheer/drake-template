@@ -13,7 +13,9 @@ source(file_in("./R/rmd_prep.R"))
 
 ```{r, echo=FALSE}
 suppressMessages(source(file_in("./R/libs.R")))
-source(file_in("./R/funs.R"))
+
+# "Self-invalidation"-issue
+#source(file_in("./R/funs.R"))
 ```
 
 # Basic information
@@ -28,7 +30,7 @@ DataExplorer::plot_intro(all)
 
 ```{r, echo=FALSE}
 funModeling::df_status(all, print_results = FALSE) %>% 
-  DT::datatable(options = list(pageLength = 100))
+  DT::datatable(options = list(pageLength = 100)) # "Self-invalidation"-issue
 ```
 
 # sessionInfo

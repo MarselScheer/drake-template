@@ -13,7 +13,9 @@ source(file_in("./R/rmd_prep.R"))
 
 ```{r, echo=FALSE}
 suppressMessages(source(file_in("./R/libs.R")))
-source(file_in("./R/funs.R"))
+
+# "Self-invalidation"-issue
+#source(file_in("./R/funs.R"))
 
 train <- readd(d)$train
 loadd(d_cor)

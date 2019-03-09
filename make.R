@@ -21,7 +21,7 @@ if (!dir.exists("reports")) {
   dir.create("reports", mode = "0755")
 }
 
-sub_plans <- plans # [1:3]
+sub_plans <- plans #[1:13]
 flog.info(glue::glue("bind plans: {paste(sort(names(sub_plans)), collapse = ', ')}"))
 plan <-
   sub_plans %>%
@@ -30,7 +30,7 @@ plan <-
 
 sub_plan <-
   plan %>%
-  h.minimal_plan(grep("m_final", plan$target, value = TRUE)) %>%
+  #h.minimal_plan(grep("m_final", plan$target, value = TRUE)) %>%
   identity()
 
 h.plan_to_source(sub_plan)
@@ -41,7 +41,10 @@ vis_drake_graph(config, targets_only = TRUE) %>% print()
 
 
 flog.info("start plan")
-make(sub_plan, cache_log_file = "cache_log.txt") # , jobs = 7, seed = 123456)
+make(sub_plan, cache_log_file = "cache_log.txt", lock_envir = FALSE) # , jobs = 7, seed = 123456)  
+
+# TODO: the call "DT::datatable(options = list(pageLength = 100))" in rmd_cleaning_DT works only with lock_envir = FALSE ?!?
+
 h.send_pushbullet(glue::glue("end plan: {paste0(unique(sub_plan$df_name), collapse = ', ')}"))
 flog.info("end plan.")
 # readd(d)$train %>%
