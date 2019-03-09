@@ -52,6 +52,7 @@ metric_profile_per_fold <- function(method, fold, tune_grid, ...) {
   probs <- function(model) caret::predict.train(model, newdata = fold$assessment, type = "prob")$PS
 
   if (is.null(tune_grid)) {
+    h.log_end()
     return(
       data.frame(
         AUC = MLmetrics::AUC(
@@ -323,6 +324,10 @@ h.annotate_with_df <- function(df, position = c("top-left", "top-right", "bottom
 }
 
 
+h.get_names <- function(...) {
+  ret <- match.call()
+  as.character(ret[-1])
+}
 
 h.bind_rows_with_id <- function(..., .id = "target") dplyr::bind_rows(..., .id = .id)
 
