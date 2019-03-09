@@ -17,15 +17,15 @@ plans$p01_import <-
 
 plans$p02_wrangle <-
   drake_plan(
-    d = wrangle(r)#,
-#    rmd_cleaning = rmarkdown::render(knitr_in("d_cleaning.Rmd"), output_file = file_out("./reports/d_cleaning.md"), quiet = TRUE),
-#    rmd_cleaning_DT = rmarkdown::render(knitr_in("d_cleaning_DT.Rmd"), output_file = file_out("./reports/d_cleaning_DT.html"), quiet = TRUE)
+    d = wrangle(r),
+    rmd_cleaning = rmarkdown::render(knitr_in("d_cleaning.Rmd"), output_file = file_out("./reports/d_cleaning.md"), quiet = TRUE),
+    rmd_cleaning_DT = rmarkdown::render(knitr_in("d_cleaning_DT.Rmd"), output_file = file_out("./reports/d_cleaning_DT.html"), quiet = TRUE)
   )
 
 plans$p03_first_glance <-
   drake_plan(
-    d_cor = d$train %>% dplyr::select_if(is.numeric) %>% corrr::correlate()#,
-#    rmd_first_glance = rmarkdown::render(knitr_in("d_first_glance.Rmd"), output_file = file_out("./reports/d_first_glance.html"), quiet = TRUE)
+    d_cor = d$train %>% dplyr::select_if(is.numeric) %>% corrr::correlate(),
+    rmd_first_glance = rmarkdown::render(knitr_in("d_first_glance.Rmd"), output_file = file_out("./reports/d_first_glance.html"), quiet = TRUE)
     # d_var_rank = funModeling::var_rank_info(d$train, "y") # takes quite a while
   )
 
@@ -57,33 +57,6 @@ plans$p05_recipes_2_filter <-
   trace = TRUE
 ) 
 
-# plans$p05_recipes_2_filter <-
-#   drake::bind_plans(
-#     drake_plan(
-#       rcp_filter = rcp_basic %>%
-#         filter__(all_predictors(), threshold = threshold__)
-#     ) %>% evaluate_plan(
-#       rules = list(
-#         filter__ = "step_corr",
-#         threshold__ = c((1:9) / 10, 0.95, 0.99)
-#       ),
-#       trace = TRUE
-#     ),
-#     drake_plan(
-#       rcp_filter = rcp_basic %>%
-#         filter__(all_predictors(), threshold = threshold__)
-#     ) %>% evaluate_plan(
-#       rules = list(
-#         filter__ = "step_pca",
-#         threshold__ = c((1:9) / 10, 0.95, 0.99)
-#       ),
-#       trace = TRUE
-#     )
-#   ) %>%
-#   dplyr::rename(filter = filter__, threshold = threshold__) %>%
-#   dplyr::select(-contains("__from"))
-
-
 
 
 plans$p06_folds_1_pure <-
@@ -107,17 +80,6 @@ plans$p06_folds_1_filter <-
   ) 
 
 
-# plans$p06_folds_1_filter <-
-#   drake_plan(
-#     fr = apply_recipe_to_folds(rcp__, raw_folds)
-#   ) %>%
-#   h.insert_base_plan(
-#     base_plan = plans$p05_recipes_2_filter,
-#     base_plan_wildcard = "rcp__",
-#     rules = list(),
-#     trace = TRUE
-#   )
-
 params <- plans$p06_folds_1_pure %>% 
   dplyr::select(rcp = target) %>% 
   dplyr::mutate_each(rlang::syms)
@@ -137,30 +99,16 @@ plans$p07_model_tuning_1_rf <-
       ),
       transform = map(.data = !!params)
     ),
+    profile_rf = target(
+      purrr::map2_dfr(list(m_rf), h.get_names(rcp), function(x,y) {
+        x$filter = y
+        x
+      }),
+      transform = combine(m_rf, rcp)
+    ),
     trace = TRUE
   )
 
-
-# plans$p07_model_tuning_1_rf <-
-#   drake_plan(
-#     m = purrr::map_dfr(rcp__, function(fold)
-#       metric_profile_per_fold(
-#         method = "model__",
-#         fold = fold,
-#         tune_grid = data.frame(mtry = c(5, 10, 20, 30, 40, 58))
-#       ),
-#     .id = "fold"
-#     )
-#   ) %>%
-#   h.insert_base_plan(
-#     base_plan = plans$p06_folds_1_pure,
-#     base_plan_wildcard = "rcp__",
-#     rules = list(
-#       model__ = "rf"
-#     ),
-#     trace = TRUE
-#   ) %>%
-#   h.clear__()
 
 params <- plans$p06_folds_1_filter %>% 
   dplyr::select(rcp = target) %>% 
@@ -181,7 +129,7 @@ plans$p07_model_tuning_1_glm <-
     ),
     profile_glm = target(
       purrr::map2_dfr(list(m_glm), h.get_names(rcp), function(x,y) {
-        x$filter = stringr::str_extract(y, "step_.*_0.\\d{1,2}")
+        x$filter = stringr::str_extract(y, "step_.*_")
         x$threshold = as.double(stringr::str_extract(y, "0.\\d{1,2}"))
         x
       }),
@@ -191,28 +139,6 @@ plans$p07_model_tuning_1_glm <-
   ) 
 
 
-
-
-# plans$p07_model_tuning_1_glm <-
-#   drake_plan(
-#     m = purrr::map_dfr(rcp__, function(fold)
-#       metric_profile_per_fold(
-#         method = "model__",
-#         fold = fold,
-#         tune_grid = NULL
-#       ),
-#     .id = "fold"
-#     )
-#   ) %>%
-#   h.insert_base_plan(
-#     base_plan = plans$p06_folds_1_filter,
-#     base_plan_wildcard = "rcp__",
-#     rules = list(
-#       model__ = "glm"
-#     ),
-#     trace = TRUE
-#   ) %>%
-#   h.clear__()
 params <- plans$p06_folds_1_filter %>% 
   dplyr::select(rcp = target) %>% 
   dplyr::mutate_each(rlang::syms)
@@ -233,77 +159,40 @@ plans$p07_model_tuning_1_svm <-
       ),
       transform = map(.data = !!params)
     ),
+    profile_svmRadial = target(
+      purrr::map2_dfr(list(m_svmRadial), h.get_names(rcp), function(x,y) {
+        x$filter = stringr::str_extract(y, "step_.*_")
+        x$threshold = as.double(stringr::str_extract(y, "0.\\d{1,2}"))
+        x
+      }),
+      transform = combine(m_svmRadial, rcp)
+    ),
     trace = TRUE
   )
 
 
-# plans$p07_model_tuning_1_svm <-
-#   drake_plan(
-#     m = purrr::map_dfr(rcp__, function(fold)
-#       metric_profile_per_fold(
-#         method = "model__",
-#         fold = fold,
-#         tune_grid = data.frame(.sigma = c(0.005, 0.01, 0.02), .C = 2^seq(-4, 4)),
-#         prob.model = TRUE
-#       ),
-#     .id = "fold"
-#     )
-#   ) %>%
-#   h.insert_base_plan(
-#     base_plan = plans$p06_folds_1_filter,
-#     base_plan_wildcard = "rcp__",
-#     rules = list(
-#       model__ = "svmRadial"
-#     ),
-#     trace = TRUE
-#   ) %>%
-#   h.clear__()
-
-
-all_model_tuning_plans <- drake::bind_plans(
-  plans$p07_model_tuning_1_rf,
-  plans$p07_model_tuning_1_glm,
-  plans$p07_model_tuning_1_svm
-)
-
-params <- all_model_tuning_plans %>% 
-  dplyr::select(-command)
-
-drake_plan(
-  profile = target(
-    list(m)
-  )
-)
-
-plans$p08_aggregate <-
-  drake::bind_plans(
-    gather_plan(all_model_tuning_plans, target = "pre_gathered_metric", gather = "h.bind_rows_with_id"),
-    drake_plan(
-      profiles = dplyr::left_join(pre_gathered_metric, dplyr::select(all_model_tuning_plans, -command)),
-      plot_rf_profiles = profiles %>%
-        dplyr::filter(model == "rf") %>%
-        dplyr::group_by(mtry) %>%
-        dplyr::mutate(AUC_mean = mean(AUC), AUC_sd = sd(AUC)) %>%
-        ggplot(aes(y = AUC, x = mtry)) +
-        geom_line(aes(group = fold), alpha = 0.2) +
-        geom_line(aes(y = AUC_mean)) +
-        geom_errorbar(aes(ymin = AUC_mean - AUC_sd, ymax = AUC_mean + AUC_sd)),
-      plot_svmrbf_profiles = profiles %>%
-        dplyr::filter(model == "svmRadial") %>%
-        dplyr::group_by(filter, threshold, .sigma, .C) %>%
-        dplyr::mutate(AUC_mean = mean(AUC), AUC_sd = sd(AUC)) %>%
-        ggplot(aes(y = AUC, x = threshold, group = interaction(.C), color = interaction(.C))) +
-        facet_grid(.sigma ~ filter, labeller = label_both) +
-        geom_line(aes(y = AUC_mean)),
-      plot_glm_profiles = profiles %>%
-        filter(model == "glm") %>%
-        dplyr::group_by(filter, threshold) %>%
-        dplyr::mutate(AUC_mean = mean(AUC), AUC_sd = sd(AUC)) %>%
-        ggplot(aes(y = AUC, x = threshold, color = filter)) +
-        geom_line(aes(group = interaction(fold, filter), color = filter), alpha = 0.2) +
-        geom_line(aes(y = AUC_mean, group = filter)) +
-        geom_errorbar(aes(ymin = AUC_mean - AUC_sd, ymax = AUC_mean + AUC_sd, group = filter))
-    )
+plans$p08_plots <-
+  drake_plan(
+    plot_rf_profiles = profile_rf %>% 
+      dplyr::group_by(mtry) %>%
+      dplyr::mutate(AUC_mean = mean(AUC), AUC_sd = sd(AUC)) %>%
+      ggplot(aes(y = AUC, x = mtry)) +
+      geom_line(aes(group = fold), alpha = 0.2) +
+      geom_line(aes(y = AUC_mean)) +
+      geom_errorbar(aes(ymin = AUC_mean - AUC_sd, ymax = AUC_mean + AUC_sd)),
+    plot_svmrbf_profiles = profile_svmRadial %>%
+      dplyr::group_by(filter, threshold, .sigma, .C) %>%
+      dplyr::mutate(AUC_mean = mean(AUC), AUC_sd = sd(AUC)) %>%
+      ggplot(aes(y = AUC, x = threshold, group = interaction(.C), color = interaction(.C))) +
+      facet_grid(.sigma ~ filter, labeller = label_both) +
+      geom_line(aes(y = AUC_mean)),
+    plot_glm_profiles = profile_glm %>%
+      dplyr::group_by(filter, threshold) %>%
+      dplyr::mutate(AUC_mean = mean(AUC), AUC_sd = sd(AUC)) %>%
+      ggplot(aes(y = AUC, x = threshold, color = filter)) +
+      geom_line(aes(group = interaction(fold, filter), color = filter), alpha = 0.2) +
+      geom_line(aes(y = AUC_mean, group = filter)) +
+      geom_errorbar(aes(ymin = AUC_mean - AUC_sd, ymax = AUC_mean + AUC_sd, group = filter))
   )
 
 plans$p09_bayes_opt <-
