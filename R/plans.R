@@ -2,7 +2,7 @@ plans <- list()
 
 plans$p00_general <-
   drake_plan(
-    rmd_template = rmarkdown::render(knitr_in('presentation_template.Rmd'), output_file = file_out('./reports/00_template.html'), quiet = TRUE),
+    #rmd_template = rmarkdown::render(knitr_in('presentation_template.Rmd'), output_file = file_out('./reports/00_template.html'), quiet = TRUE),
     AUTHOR = paste("Marsel Scheer"),
     ANALYSIS_UNIQUE_ID = paste("0e2278ab-9bc5-4018-90e9-3500fddc0926"),
     ABSTRACT = paste("Lorem ipsum dolor sit amet, consetetur sadipscing elitr")
@@ -17,15 +17,15 @@ plans$p01_import <-
 
 plans$p02_wrangle <-
   drake_plan(
-    d = wrangle(r),
-    rmd_cleaning = rmarkdown::render(knitr_in("d_cleaning.Rmd"), output_file = file_out("./reports/d_cleaning.md"), quiet = TRUE),
-    rmd_cleaning_DT = rmarkdown::render(knitr_in("d_cleaning_DT.Rmd"), output_file = file_out("./reports/d_cleaning_DT.html"), quiet = TRUE)
+    d = wrangle(r)#,
+#    rmd_cleaning = rmarkdown::render(knitr_in("d_cleaning.Rmd"), output_file = file_out("./reports/d_cleaning.md"), quiet = TRUE),
+#    rmd_cleaning_DT = rmarkdown::render(knitr_in("d_cleaning_DT.Rmd"), output_file = file_out("./reports/d_cleaning_DT.html"), quiet = TRUE)
   )
 
 plans$p03_first_glance <-
   drake_plan(
-    d_cor = d$train %>% dplyr::select_if(is.numeric) %>% corrr::correlate(),
-    rmd_first_glance = rmarkdown::render(knitr_in("d_first_glance.Rmd"), output_file = file_out("./reports/d_first_glance.html"), quiet = TRUE)
+    d_cor = d$train %>% dplyr::select_if(is.numeric) %>% corrr::correlate()#,
+#    rmd_first_glance = rmarkdown::render(knitr_in("d_first_glance.Rmd"), output_file = file_out("./reports/d_first_glance.html"), quiet = TRUE)
     # d_var_rank = funModeling::var_rank_info(d$train, "y") # takes quite a while
   )
 
@@ -47,31 +47,43 @@ plans$p05_recipes_1_basic <-
       step_scale(all_predictors())
   )
 
-plans$p05_recipes_2_filter <-
-  drake::bind_plans(
-    drake_plan(
-      rcp_filter = rcp_basic %>%
-        filter__(all_predictors(), threshold = threshold__)
-    ) %>% evaluate_plan(
-      rules = list(
-        filter__ = "step_corr",
-        threshold__ = c((1:9) / 10, 0.95, 0.99)
-      ),
-      trace = TRUE
-    ),
-    drake_plan(
-      rcp_filter = rcp_basic %>%
-        filter__(all_predictors(), threshold = threshold__)
-    ) %>% evaluate_plan(
-      rules = list(
-        filter__ = "step_pca",
-        threshold__ = c((1:9) / 10, 0.95, 0.99)
-      ),
-      trace = TRUE
-    )
-  ) %>%
-  dplyr::rename(filter = filter__, threshold = threshold__) %>%
-  dplyr::select(-contains("__from"))
+
+plans$p05_recipes_2_filter <- 
+  drake_plan(
+  rcp_filter = target(
+    rcp_basic %>% filter(all_predictors(), threshold = threshold),
+    transform = cross(filter = c(step_corr, step_pca), threshold = c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.99))
+  ),
+  trace = TRUE
+) 
+
+# plans$p05_recipes_2_filter <-
+#   drake::bind_plans(
+#     drake_plan(
+#       rcp_filter = rcp_basic %>%
+#         filter__(all_predictors(), threshold = threshold__)
+#     ) %>% evaluate_plan(
+#       rules = list(
+#         filter__ = "step_corr",
+#         threshold__ = c((1:9) / 10, 0.95, 0.99)
+#       ),
+#       trace = TRUE
+#     ),
+#     drake_plan(
+#       rcp_filter = rcp_basic %>%
+#         filter__(all_predictors(), threshold = threshold__)
+#     ) %>% evaluate_plan(
+#       rules = list(
+#         filter__ = "step_pca",
+#         threshold__ = c((1:9) / 10, 0.95, 0.99)
+#       ),
+#       trace = TRUE
+#     )
+#   ) %>%
+#   dplyr::rename(filter = filter__, threshold = threshold__) %>%
+#   dplyr::select(-contains("__from"))
+
+
 
 
 plans$p06_folds_1_pure <-
@@ -80,93 +92,187 @@ plans$p06_folds_1_pure <-
   )
 
 
+params <- 
+  plans$p05_recipes_2_filter %>% 
+  dplyr::select(rcp = target) %>% 
+  dplyr::mutate_each(rlang::syms)
 
 plans$p06_folds_1_filter <-
   drake_plan(
-    fr = apply_recipe_to_folds(rcp__, raw_folds)
-  ) %>%
-  h.insert_base_plan(
-    base_plan = plans$p05_recipes_2_filter,
-    base_plan_wildcard = "rcp__",
-    rules = list(),
+    fr = target(
+      apply_recipe_to_folds(rcp, raw_folds),
+      transform = map(.data = !!params)
+    ),
+    trace = TRUE
+  ) 
+
+
+# plans$p06_folds_1_filter <-
+#   drake_plan(
+#     fr = apply_recipe_to_folds(rcp__, raw_folds)
+#   ) %>%
+#   h.insert_base_plan(
+#     base_plan = plans$p05_recipes_2_filter,
+#     base_plan_wildcard = "rcp__",
+#     rules = list(),
+#     trace = TRUE
+#   )
+
+params <- plans$p06_folds_1_pure %>% 
+  dplyr::select(rcp = target) %>% 
+  dplyr::mutate_each(rlang::syms)
+  
+  
+
+plans$p07_model_tuning_1_rf <-
+  drake_plan(
+    m_rf = target(
+      purrr::map_dfr(rcp, function(fold)
+        metric_profile_per_fold(
+          method = "rf",
+          fold = fold,
+          tune_grid = data.frame(mtry = c(5, 10, 20, 30, 40, 58))
+        ),
+        .id = "fold"
+      ),
+      transform = map(.data = !!params)
+    ),
     trace = TRUE
   )
 
 
+# plans$p07_model_tuning_1_rf <-
+#   drake_plan(
+#     m = purrr::map_dfr(rcp__, function(fold)
+#       metric_profile_per_fold(
+#         method = "model__",
+#         fold = fold,
+#         tune_grid = data.frame(mtry = c(5, 10, 20, 30, 40, 58))
+#       ),
+#     .id = "fold"
+#     )
+#   ) %>%
+#   h.insert_base_plan(
+#     base_plan = plans$p06_folds_1_pure,
+#     base_plan_wildcard = "rcp__",
+#     rules = list(
+#       model__ = "rf"
+#     ),
+#     trace = TRUE
+#   ) %>%
+#   h.clear__()
 
-plans$p07_model_tuning_1_rf <-
-  drake_plan(
-    m = purrr::map_dfr(rcp__, function(fold)
-      metric_profile_per_fold(
-        method = "model__",
-        fold = fold,
-        tune_grid = data.frame(mtry = c(5, 10, 20, 30, 40, 58))
-      ),
-    .id = "fold"
-    )
-  ) %>%
-  h.insert_base_plan(
-    base_plan = plans$p06_folds_1_pure,
-    base_plan_wildcard = "rcp__",
-    rules = list(
-      model__ = "rf"
-    ),
-    trace = TRUE
-  ) %>%
-  h.clear__()
-
-
-
+params <- plans$p06_folds_1_filter %>% 
+  dplyr::select(rcp = target) %>% 
+  dplyr::mutate_each(rlang::syms)
 
 plans$p07_model_tuning_1_glm <-
   drake_plan(
-    m = purrr::map_dfr(rcp__, function(fold)
-      metric_profile_per_fold(
-        method = "model__",
-        fold = fold,
-        tune_grid = NULL
+    m_glm = target(
+      purrr::map_dfr(rcp, function(fold)
+        metric_profile_per_fold(
+          method = "glm",
+          fold = fold,
+          tune_grid = NULL
+        ),
+        .id = "fold"
       ),
-    .id = "fold"
-    )
-  ) %>%
-  h.insert_base_plan(
-    base_plan = plans$p06_folds_1_filter,
-    base_plan_wildcard = "rcp__",
-    rules = list(
-      model__ = "glm"
+      transform = map(.data = !!params)
+    ),
+    profile_glm = target(
+      purrr::map2_dfr(list(m_glm), h.get_names(rcp), function(x,y) {
+        x$filter = stringr::str_extract(y, "step_.*_0.\\d{1,2}")
+        x$threshold = as.double(stringr::str_extract(y, "0.\\d{1,2}"))
+        x
+      }),
+      transform = combine(m_glm, rcp)
     ),
     trace = TRUE
-  ) %>%
-  h.clear__()
+  ) 
+
+
+
+
+# plans$p07_model_tuning_1_glm <-
+#   drake_plan(
+#     m = purrr::map_dfr(rcp__, function(fold)
+#       metric_profile_per_fold(
+#         method = "model__",
+#         fold = fold,
+#         tune_grid = NULL
+#       ),
+#     .id = "fold"
+#     )
+#   ) %>%
+#   h.insert_base_plan(
+#     base_plan = plans$p06_folds_1_filter,
+#     base_plan_wildcard = "rcp__",
+#     rules = list(
+#       model__ = "glm"
+#     ),
+#     trace = TRUE
+#   ) %>%
+#   h.clear__()
+params <- plans$p06_folds_1_filter %>% 
+  dplyr::select(rcp = target) %>% 
+  dplyr::mutate_each(rlang::syms)
+
 
 
 plans$p07_model_tuning_1_svm <-
   drake_plan(
-    m = purrr::map_dfr(rcp__, function(fold)
-      metric_profile_per_fold(
-        method = "model__",
-        fold = fold,
-        tune_grid = data.frame(.sigma = c(0.005, 0.01, 0.02), .C = 2^seq(-4, 4)),
-        prob.model = TRUE
+    m_svmRadial = target(
+      purrr::map_dfr(rcp, function(fold)
+        metric_profile_per_fold(
+          method = "svmRadial",
+          fold = fold,
+          tune_grid = data.frame(.sigma = c(0.005, 0.01, 0.02), .C = 2^seq(-4, 4)),
+          prob.model = TRUE
+        ),
+        .id = "fold"
       ),
-    .id = "fold"
-    )
-  ) %>%
-  h.insert_base_plan(
-    base_plan = plans$p06_folds_1_filter,
-    base_plan_wildcard = "rcp__",
-    rules = list(
-      model__ = "svmRadial"
+      transform = map(.data = !!params)
     ),
     trace = TRUE
-  ) %>%
-  h.clear__()
+  )
+
+
+# plans$p07_model_tuning_1_svm <-
+#   drake_plan(
+#     m = purrr::map_dfr(rcp__, function(fold)
+#       metric_profile_per_fold(
+#         method = "model__",
+#         fold = fold,
+#         tune_grid = data.frame(.sigma = c(0.005, 0.01, 0.02), .C = 2^seq(-4, 4)),
+#         prob.model = TRUE
+#       ),
+#     .id = "fold"
+#     )
+#   ) %>%
+#   h.insert_base_plan(
+#     base_plan = plans$p06_folds_1_filter,
+#     base_plan_wildcard = "rcp__",
+#     rules = list(
+#       model__ = "svmRadial"
+#     ),
+#     trace = TRUE
+#   ) %>%
+#   h.clear__()
 
 
 all_model_tuning_plans <- drake::bind_plans(
   plans$p07_model_tuning_1_rf,
   plans$p07_model_tuning_1_glm,
   plans$p07_model_tuning_1_svm
+)
+
+params <- all_model_tuning_plans %>% 
+  dplyr::select(-command)
+
+drake_plan(
+  profile = target(
+    list(m)
+  )
 )
 
 plans$p08_aggregate <-
