@@ -6,3 +6,4 @@ reports/*files/
 .RData
 .Ruserdata
 
+packrat/lib*/
