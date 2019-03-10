@@ -13,11 +13,6 @@ output:
 source(file_in("./R/rmd_prep.R"))
 ```
 
-```{r, echo=FALSE}
-suppressMessages(source("./R/libs.R"))
-source("./R/funs.R")
-```
-
 * abc
 
 # Slide 2

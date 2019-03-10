@@ -12,10 +12,7 @@ source(file_in("./R/rmd_prep.R"))
 
 
 ```{r, echo=FALSE}
-suppressMessages(source(file_in("./R/libs.R")))
-
-# "Self-invalidation"-issue
-#source(file_in("./R/funs.R"))
+library(drake)
 
 train <- readd(d)$train
 all <- dplyr::bind_rows(readd(d), .id = "df_name")

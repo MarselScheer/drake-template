@@ -41,9 +41,8 @@ vis_drake_graph(config, targets_only = TRUE) %>% print()
 
 
 flog.info("start plan")
-make(sub_plan, cache_log_file = "cache_log.txt", lock_envir = FALSE) # , jobs = 7, seed = 123456)  
-
 # TODO: the call "DT::datatable(options = list(pageLength = 100))" in rmd_cleaning_DT works only with lock_envir = FALSE ?!?
+make(sub_plan, cache_log_file = "cache_log.txt", lock_envir = TRUE) # , jobs = 7, seed = 123456)    
 
 h.send_pushbullet(glue::glue("end plan: {paste0(unique(sub_plan$df_name), collapse = ', ')}"))
 flog.info("end plan.")

@@ -2,7 +2,7 @@ plans <- list()
 
 plans$p00_general <-
   drake_plan(
-    #rmd_template = rmarkdown::render(knitr_in('presentation_template.Rmd'), output_file = file_out('./reports/00_template.html'), quiet = TRUE),
+    rmd_template = rmarkdown::render(knitr_in('presentation_template.Rmd'), output_file = file_out('./reports/00_template.html'), quiet = TRUE),
     AUTHOR = paste("Marsel Scheer"),
     ANALYSIS_UNIQUE_ID = paste("0e2278ab-9bc5-4018-90e9-3500fddc0926"),
     ABSTRACT = paste("Lorem ipsum dolor sit amet, consetetur sadipscing elitr")
