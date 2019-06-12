@@ -1,6 +1,7 @@
 rm(list = ls())
 
 VFOLDS <- 2
+MAX_EXPAND <- NULL
 
 source("R/libs.R")
 pkgconfig::set_config("drake::strings_in_dots" = "literals")

@@ -48,16 +48,15 @@ plans$p05_recipes_1_basic <-
   )
 
 
-plans$p05_recipes_2_filter <- 
+plans$p05_recipes_2_filter <-
   drake_plan(
-  rcp_filter = target(
-    rcp_basic %>% filter(all_predictors(), threshold = threshold),
-    transform = cross(filter = c(step_corr, step_pca), threshold = c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.99))
-  ),
-  trace = TRUE
-) 
-
-
+    max_expand = MAX_EXPAND,
+    rcp_filter = target(
+      rcp_basic %>% filter(all_predictors(), threshold = threshold),
+      transform = cross(filter = c(step_corr, step_pca), threshold = c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.99))
+    ),
+    trace = TRUE
+  )
 
 plans$p06_folds_1_pure <-
   drake_plan(
@@ -72,6 +71,7 @@ params <-
 
 plans$p06_folds_1_filter <-
   drake_plan(
+    max_expand = MAX_EXPAND,
     fr = target(
       apply_recipe_to_folds(rcp, raw_folds),
       transform = map(.data = !!params)
@@ -88,6 +88,7 @@ params <- plans$p06_folds_1_pure %>%
 
 plans$p07_model_tuning_1_rf <-
   drake_plan(
+    max_expand = MAX_EXPAND,
     m_rf = target(
       purrr::map_dfr(rcp, function(fold)
         metric_profile_per_fold(
@@ -116,6 +117,7 @@ params <- plans$p06_folds_1_filter %>%
 
 plans$p07_model_tuning_1_glm <-
   drake_plan(
+    max_expand = MAX_EXPAND,
     m_glm = target(
       purrr::map_dfr(rcp, function(fold)
         metric_profile_per_fold(
@@ -147,6 +149,7 @@ params <- plans$p06_folds_1_filter %>%
 
 plans$p07_model_tuning_1_svm <-
   drake_plan(
+    max_expand = MAX_EXPAND,
     m_svmRadial = target(
       purrr::map_dfr(rcp, function(fold)
         metric_profile_per_fold(
