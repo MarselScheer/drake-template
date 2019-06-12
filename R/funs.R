@@ -55,9 +55,9 @@ metric_profile_per_fold <- function(method, fold, tune_grid, ...) {
     h.log_end()
     return(
       data.frame(
-        AUC = MLmetrics::AUC(
-          y_pred = probs(fit(NULL)),
-          y_true = fold$assessment$y == "PS"
+        AUC = ModelMetrics::auc(
+          predicted = probs(fit(NULL)),
+          actual = fold$assessment$y == "PS"
         ),
         grid = FALSE
       )
@@ -67,9 +67,9 @@ metric_profile_per_fold <- function(method, fold, tune_grid, ...) {
   ret <- tune_grid
   ret$AUC <- NA
   for (row in 1:nrow(tune_grid)) {
-    ret$AUC[row] <- MLmetrics::AUC(
-      y_pred = probs(fit(tune_grid[row, , drop = FALSE])),
-      y_true = fold$assessment$y == "PS"
+    ret$AUC[row] <- ModelMetrics::auc(
+      predicted = probs(fit(tune_grid[row, , drop = FALSE])),
+      actual = fold$assessment$y == "PS"
     )
   }
   ret$grid <- TRUE
