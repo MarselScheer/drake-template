@@ -239,22 +239,12 @@ h.plan_to_source <- function(plan) {
   code <- c(readLines("./R/libs.R"), readLines("./R/funs.R"), readLines(fName))
 
   writeLines(code, con = fName)
+  invisible(plan)
 }
 
 
-h.necessary_targets <- function(config, target) {
-  drake_graph_info(config, from = target, mode = "in", targets_only = TRUE)$nodes$id
-}
-
-h.minimal_plan <- function(plan, targets) {
-  config <- drake_config(plan)
-
-  all_necessary_targets <- purrr::map(targets, purrr::partial(h.necessary_targets, config = config)) %>%
-    unlist() %>%
-    unique()
-
-  plan %>%
-    dplyr::filter(target %in% all_necessary_targets)
+h.necessary_targets <- function(config, targets) {
+  drake_graph_info(config, from = targets, mode = "in", targets_only = TRUE)$nodes$id
 }
 
 h.insert_base_plan <- function(plan, base_plan, base_plan_wildcard, rules = NULL, wildcard = NULL, values = NULL, expand = TRUE, rename = expand, trace = FALSE, columns = "command") {
