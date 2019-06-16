@@ -122,11 +122,12 @@ wrangle <- function(df) {
 
 get_segmentation_data <- function() {
   h.log_start()
-
-  data("segmentationData", package = "caret")
+  # in order to avoid self-invalidation in drake caused by modifying .GlobalEnv
+  ne <- new.env()
+  data("segmentationData", package = "caret", envir = ne)
 
   h.log_end()
-  return(segmentationData)
+  return(get("segmentationData", envir = ne))
 }
 
 load_set <- function(fname, .set) {
