@@ -98,7 +98,7 @@ plans$p02_glm <- drake_plan(
       rcp %>% 
         recipes::prep(training = train[rs_idx$index[[fold_nmb]]], retain = FALSE)
     }),
-    transform = cross(rcp)
+    transform = map(rcp)
   ),
   
   a_glm1 = target(
@@ -121,3 +121,66 @@ plans$p02_glm <- drake_plan(
   
   trace = TRUE
 );plans$p02_glm %>% dplyr::select(target, command) %>% tail(n = 2); plans$p02_glm %>% drake_config() %>% vis_drake_graph(targets_only = TRUE)
+
+
+auc_rf <- function(rec, rs_idx, data, constellation, return_fit = FALSE, return_assessment_set = FALSE) {
+  purrr::map_dfr(seq_along(rec), function(i){
+    
+    analysis <- recipes::bake(rec[[i]], new_data = data[rs_idx$index[[i]]])
+    fit <- parsnip::rand_forest(mtry = !!constellation$mtry, trees = !!constellation$trees) %>%
+      parsnip::set_engine("randomForest") %>%
+      parsnip::fit(y ~ ., data = analysis)
+    
+    assessment <- recipes::bake(rec[[i]], new_data = data[rs_idx$indexOut[[i]]]) %>% 
+      modelr::add_predictions(fit, type = "prob")
+    assessment$pred <- assessment$pred$.pred_WS
+    
+    ret <- constellation %>% 
+      dplyr::mutate(fold_nmb = i, auc = auc(assessment))
+    
+    if (return_fit) {
+      ret$fit <- list(fit)
+    }
+    if (return_assessment_set) {
+      ret$assessment <- list(assessment)
+    }
+    
+    ret
+  })
+}
+
+
+plans$p02_rf <- drake_plan(
+  max_expand = MAX_EXPAND,
+  
+  rcp_rf = target(
+    recipes::recipe(y ~ ., data = head(train))
+  ),
+  
+  rec_rf1 = target(
+    purrr::map(seq_len(VFOLDS), function(fold_nmb){
+      rcp_rf %>% 
+        recipes::prep(training = train[rs_idx$index[[fold_nmb]]], retain = FALSE)
+    })
+  ),
+  
+  a_rf1 = target(
+    auc_rf(rec_rf1, rs_idx, train, 
+            constellation = dplyr::tibble(model = to_char(rec1),
+                                          mtry = mtry,
+                                          trees = trees)),
+    transform = cross(rec_rf1, mtry = c(5,10,20,30), trees = c(100,200))
+  ),
+  
+  
+  profile_rf1 = target(
+    dplyr::bind_rows(a_rf1),
+    transform = combine(a_rf1)
+  ),
+  plot_profile_rf1 = profile_rf1 %>%
+    ggplot(aes(x = mtry, y = auc)) +
+    geom_line(aes(group = fold_nmb)) + 
+    facet_wrap(~trees),
+  
+  trace = TRUE
+);plans$p02_rf %>% dplyr::select(target, command) %>% tail(n = 20); plans$p02_rf %>% drake_config() %>% vis_drake_graph(targets_only = TRUE)
