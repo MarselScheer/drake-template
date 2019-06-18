@@ -90,5 +90,10 @@ plans$p02_glm <- drake_plan(
     dplyr::bind_rows(a_glm1),
     transform = combine(a_glm1)
   ),
+  plot_profile_glm1 = profile_glm1 %>% 
+    ggplot(aes(x = threshold, y = auc)) + 
+    geom_line(aes(group = fold_nmb)) + 
+    facet_wrap(~filter),
+  
   trace = TRUE
 )
