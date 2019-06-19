@@ -115,6 +115,7 @@ plans$p02_glm <- drake_plan(
     transform = combine(a_glm1)
   ),
   plot_profile_glm1 = profile_glm1 %>%
+    dplyr::select(threshold, auc, fold_nmb, filter) %>% 
     ggplot(aes(x = threshold, y = auc)) +
     geom_line(aes(group = fold_nmb)) +
     facet_wrap(~filter),
@@ -178,6 +179,7 @@ plans$p02_rf <- drake_plan(
     transform = combine(a_rf1)
   ),
   plot_profile_rf1 = profile_rf1 %>%
+    dplyr::select(mtry, auc, fold_nmb, trees) %>% 
     ggplot(aes(x = mtry, y = auc)) +
     geom_line(aes(group = fold_nmb)) + 
     facet_wrap(~trees),
