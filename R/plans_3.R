@@ -27,11 +27,13 @@ auc_glm <- function(rec, rs_idx, data, constellation, return_fit = FALSE, return
   purrr::map_dfr(seq_along(rec), function(i){
     
     analysis <- recipes::bake(rec[[i]], new_data = data[rs_idx$index[[i]]])
-    fit <- glm(y ~ ., data = analysis, family = binomial())
-
+    fit <- parsnip::logistic_reg(mode = "classification", penalty = 0, mixture = 0) %>%
+      parsnip::set_engine("glm") %>%
+      parsnip::fit(y ~ ., data = analysis)
+    
     assessment <- recipes::bake(rec[[i]], new_data = data[rs_idx$indexOut[[i]]]) %>% 
-      modelr::add_predictions(fit)
-
+      modelr::add_predictions(fit, type = "prob")
+    assessment$pred <- assessment$pred$.pred_WS
     ret <- constellation %>% 
       dplyr::mutate(fold_nmb = i, auc = auc(assessment))
 
