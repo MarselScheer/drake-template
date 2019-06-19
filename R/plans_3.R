@@ -47,6 +47,35 @@ auc_glm <- function(rec, rs_idx, data, constellation, return_fit = FALSE, return
     ret
   })
 }
+
+auc_svm <- function(rec, rs_idx, data, constellation, return_fit = FALSE, return_assessment_set = FALSE) {
+  purrr::map_dfr(seq_along(rec), function(i){
+    
+    analysis <- recipes::bake(rec[[i]], new_data = data[rs_idx$index[[i]]])
+    fit <- parsnip::svm_rbf(mode = "classification", cost = !!constellation$cost, rbf_sigma = !!constellation$rbf_sigma) %>%
+      parsnip::set_engine("kernlab") %>%
+      parsnip::fit(y ~ ., data = analysis)
+    
+    assessment <- recipes::bake(rec[[i]], new_data = data[rs_idx$indexOut[[i]]]) %>% 
+      modelr::add_predictions(fit, type = "prob")
+    assessment$pred <- assessment$pred$.pred_WS
+    
+    ret <- constellation %>% 
+      dplyr::mutate(fold_nmb = i, auc = auc(assessment))
+    
+    if (return_fit) {
+      ret$fit <- list(fit)
+    }
+    if (return_assessment_set) {
+      ret$assessment <- list(assessment)
+    }
+    
+    ret
+  })
+}
+
+
+
 auc <- function(assessment) {
   ModelMetrics::auc(assessment$y != "PS", assessment$pred)
 }
@@ -82,7 +111,7 @@ plans$p01_rss <- drake_plan(
   trace = TRUE
 )
 
-plans$p02_glm <- drake_plan(
+plans$p02_glm_svm <- drake_plan(
   max_expand = MAX_EXPAND,
   
   rcp = target(
@@ -122,8 +151,41 @@ plans$p02_glm <- drake_plan(
     geom_line(aes(group = fold_nmb)) +
     facet_wrap(~filter),
   
+  
+  #-# svm  - add to this plan because we reuse the recipes for the glm
+  
+    a_svm1 = target(
+      auc_svm(rec1, rs_idx, train,
+             constellation = dplyr::tibble(rcp = to_char(rec1),
+                                           filter = to_char(filter),
+                                           threshold = threshold,
+                                           rbf_sigma = rbf_sigma,
+                                           cost = cost)),
+      transform = map(rec1, rbf_sigma = c(0.01), cost = c(1)) #2^0
+    ),
+    profile_svm1 = target(
+      dplyr::bind_rows(a_svm1),
+      transform = combine(a_svm1)
+    ),
+    plot_profile_svm1 = profile_svm1 %>%
+      dplyr::select(threshold, filter, cost, rbf_sigma, auc, fold_nmb) %>%
+      ggplot(aes(x = threshold, y = auc, color = as.factor(rbf_sigma))) +
+      geom_line(aes(group = fold_nmb)) +
+      facet_wrap(~filter+cost, labeller = label_both),
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   trace = TRUE
-);plans$p02_glm %>% dplyr::select(target, command) %>% tail(n = 2); try(plans$p02_glm %>% drake_config() %>% vis_drake_graph(targets_only = TRUE))
+);plans$p02_glm_svm %>% dplyr::select(target, command) %>% tail(n = 2); try(plans$p02_glm_svm %>% drake_config() %>% vis_drake_graph(targets_only = TRUE))
 
 
 auc_rf <- function(rec, rs_idx, data, constellation, return_fit = FALSE, return_assessment_set = FALSE) {
@@ -188,71 +250,6 @@ plans$p02_rf <- drake_plan(
   
   trace = TRUE
 );plans$p02_rf %>% dplyr::select(target, command) %>% tail(n = 20); try(plans$p02_rf %>% drake_config() %>% vis_drake_graph(targets_only = TRUE))
-
-
-
-
-
-auc_svm <- function(rec, rs_idx, data, constellation, return_fit = FALSE, return_assessment_set = FALSE) {
-  purrr::map_dfr(seq_along(rec), function(i){
-    
-    analysis <- recipes::bake(rec[[i]], new_data = data[rs_idx$index[[i]]])
-    fit <- parsnip::svm_rbf(mode = "classification", cost = !!constellation$cost, rbf_sigma = !!constellation$rbf_sigma) %>%
-      parsnip::set_engine("kernlab") %>%
-      parsnip::fit(y ~ ., data = analysis)
-    
-    assessment <- recipes::bake(rec[[i]], new_data = data[rs_idx$indexOut[[i]]]) %>% 
-      modelr::add_predictions(fit, type = "prob")
-    assessment$pred <- assessment$pred$.pred_WS
-    
-    ret <- constellation %>% 
-      dplyr::mutate(fold_nmb = i, auc = auc(assessment))
-    
-    if (return_fit) {
-      ret$fit <- list(fit)
-    }
-    if (return_assessment_set) {
-      ret$assessment <- list(assessment)
-    }
-    
-    ret
-  })
-}
-
-
-
-recs <- plans$p02_glm %>%
-  dplyr::filter(grepl("^rec1", target)) %>%
-  dplyr::select(recs = target, filter, threshold) %>%
-  dplyr::mutate_each(rlang::syms)
-
-
-plans$p02_svm <- drake_plan(
-  max_expand = MAX_EXPAND,
-
-  a_svm1 = target(
-    auc_svm(recs, rs_idx, train,
-           constellation = dplyr::tibble(rcp = to_char(recs),
-                                         filter = to_char(filter),
-                                         threshold = threshold,
-                                         rbf_sigma = rbf_sigma,
-                                         cost = cost)),
-    transform = map(.data = !!recs, rbf_sigma = c(0.01), cost = c(1)) #2^0
-  ),
-
-
-  profile_svm1 = target(
-    dplyr::bind_rows(a_svm1),
-    transform = combine(a_svm1)
-  ),
-  plot_profile_svm1 = profile_svm1 %>%
-    dplyr::select(threshold, filter, cost, rbf_sigma, auc, fold_nmb) %>%
-    ggplot(aes(x = threshold, y = auc, color = as.factor(rbf_sigma))) +
-    geom_line(aes(group = fold_nmb)) +
-    facet_wrap(~filter+cost, labeller = label_both),
-
-  trace = TRUE
-);plans$p02_svm %>% dplyr::select(target, command) %>% tail(n = 2); try(plans$p02_svm %>% drake_config() %>% vis_drake_graph(targets_only = TRUE))
 
 
 
