@@ -253,3 +253,75 @@ plans$p02_svm <- drake_plan(
 
   trace = TRUE
 );plans$p02_svm %>% dplyr::select(target, command) %>% tail(n = 2); try(plans$p02_svm %>% drake_config() %>% vis_drake_graph(targets_only = TRUE))
+
+
+
+bayes_opt_svm <- function(rec, rs_idx, data, bounds, init_grid_dt = NULL, init_points = 0, n_iter) {
+  h.log_start()
+  
+  FUN <- function(rbf_sigma, cost) {
+    constellation <- data.frame(rbf_sigma = rbf_sigma, cost = cost)
+    txt <- capture.output(
+      result <- auc_svm(rec, rs_idx, data, constellation)
+    )
+    list(Score = mean(result$auc), Pred = 0)
+  }
+
+  ret <-
+    rBayesianOptimization::BayesianOptimization(
+      FUN,
+      bounds = bounds,
+      init_grid_dt = init_grid_dt,
+      init_points = init_points,
+      n_iter = n_iter,
+      acq = "ucb",
+      verbose = TRUE
+    )
+  
+  ret$History <- dplyr::rename(ret$History, auc = Value)
+  
+  h.log_end()
+  ret
+}
+
+plans$p02_bo_svm <- drake_plan(
+  max_expand = MAX_EXPAND,
+  
+  bo_svm1 = target(
+    bayes_opt_svm(rec = rec1_rcp_step_pca_0.5, 
+                  rs_idx = rs_idx, 
+                  data = train,
+                  bounds = list(rbf_sigma = c(0.00001, 0.1), cost = c(0.00001, 64)), 
+                  init_grid_dt = NULL, 
+                  init_points = 10,
+                  n_iter = 2
+    )
+  ),
+
+  bo_svm2 = target(
+    bayes_opt_svm(rec = rec1_rcp_step_pca_0.5, 
+                  rs_idx = rs_idx, 
+                  data = train,
+                  bounds = list(rbf_sigma = c(0.00001, 0.1), cost = c(0.00001, 64)), 
+                  init_grid_dt = bo_svm1$History %>% dplyr::select(rbf_sigma, cost, Value = auc), 
+                  init_points = 0,
+                  n_iter = 2
+    )
+  ),
+  
+  plot_bo_svm2 = bo_svm2$History %>% 
+    ggplot(aes(x = rbf_sigma, y = cost, color = auc, size = auc, shape = auc == max(auc))) + 
+    geom_point(),
+  # profile_svm1 = target(
+  #   dplyr::bind_rows(a_svm1),
+  #   transform = combine(a_svm1)
+  # ),
+  # plot_profile_svm1 = profile_svm1 %>%
+  #   dplyr::select(threshold, filter, cost, rbf_sigma, auc, fold_nmb) %>%
+  #   ggplot(aes(x = threshold, y = auc, color = as.factor(rbf_sigma))) +
+  #   geom_line(aes(group = fold_nmb)) +
+  #   facet_wrap(~filter+cost, labeller = label_both),
+  
+  trace = TRUE
+);plans$p02_bo_svm %>% dplyr::select(target, command) %>% tail(n = 2); try(plans$p02_bo_svm %>% drake_config() %>% vis_drake_graph(targets_only = TRUE))
+
