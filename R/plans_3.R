@@ -103,7 +103,7 @@ plans$p02_glm <- drake_plan(
   
   a_glm1 = target(
     auc_glm(rec1, rs_idx, train, 
-              constellation = dplyr::tibble(model = to_char(rec1),
+              constellation = dplyr::tibble(rcp = to_char(rec1),
                             filter = to_char(filter),
                             threshold = threshold)),
     transform = map(rec1)
@@ -167,7 +167,7 @@ plans$p02_rf <- drake_plan(
   
   a_rf1 = target(
     auc_rf(rec_rf1, rs_idx, train, 
-            constellation = dplyr::tibble(model = to_char(rec1),
+            constellation = dplyr::tibble(rcp = to_char(rec1),
                                           mtry = mtry,
                                           trees = trees)),
     transform = cross(rec_rf1, mtry = c(5,10,20,30), trees = c(100,200))
@@ -230,7 +230,7 @@ plans$p02_svm <- drake_plan(
 
   a_svm1 = target(
     auc_svm(recs, rs_idx, train,
-           constellation = dplyr::tibble(model = to_char(recs),
+           constellation = dplyr::tibble(rcp = to_char(recs),
                                          filter = to_char(filter),
                                          threshold = threshold,
                                          rbf_sigma = rbf_sigma,
@@ -244,7 +244,7 @@ plans$p02_svm <- drake_plan(
     transform = combine(a_svm1)
   ),
   plot_profile_svm1 = profile_svm1 %>%
-    dplyr::select(threshold, filter, cost, rbf_sigma, auc, fold_nmb, model) %>%
+    dplyr::select(threshold, filter, cost, rbf_sigma, auc, fold_nmb) %>%
     ggplot(aes(x = threshold, y = auc, color = as.factor(rbf_sigma))) +
     geom_line(aes(group = fold_nmb)) +
     facet_wrap(~filter+cost, labeller = label_both),
