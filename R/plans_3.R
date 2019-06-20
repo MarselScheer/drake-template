@@ -133,14 +133,21 @@ plans$p02_glm_svm <- drake_plan(
   ),
   
   a_glm1 = target(
-    auc_glm(rec1, rs_idx, train, 
-              constellation = dplyr::tibble(rcp = to_char(rec1),
-                            filter = to_char(filter),
-                            threshold = threshold)),
+    auc_parsnip(
+      rec = rec1, 
+      constellation = dplyr::tibble(
+        rcp = to_char(rec1),
+        filter = to_char(filter),
+        threshold = threshold,
+        penalty = 0,
+        mixture = 0),
+      parsnip_model = parsnip::logistic_reg(mode = "classification", penalty = parsnip::varying(), mixture = parsnip::varying()) %>%
+        parsnip::set_engine("glm", model = F, y = F), # model and y are stat::glm-parameters
+      rs_idx = rs_idx,
+      data = train),
     transform = map(rec1)
   ),
-
-
+  
   profile_glm1 = target(
     dplyr::bind_rows(a_glm1),
     transform = combine(a_glm1)
@@ -154,24 +161,29 @@ plans$p02_glm_svm <- drake_plan(
   
   #-# svm  - add to this plan because we reuse the recipes for the glm
   
-    a_svm1 = target(
-      auc_svm(rec1, rs_idx, train,
-             constellation = dplyr::tibble(rcp = to_char(rec1),
-                                           filter = to_char(filter),
-                                           threshold = threshold,
-                                           rbf_sigma = rbf_sigma,
-                                           cost = cost)),
-      transform = map(rec1, rbf_sigma = c(0.01), cost = c(1)) #2^0
-    ),
-    profile_svm1 = target(
-      dplyr::bind_rows(a_svm1),
-      transform = combine(a_svm1)
-    ),
-    plot_profile_svm1 = profile_svm1 %>%
-      dplyr::select(threshold, filter, cost, rbf_sigma, auc, fold_nmb) %>%
-      ggplot(aes(x = threshold, y = auc, color = as.factor(rbf_sigma))) +
-      geom_line(aes(group = fold_nmb)) +
-      facet_wrap(~filter+cost, labeller = label_both),
+  a_svm1 = target(
+    auc_parsnip(
+      rec = rec1, 
+      constellation = dplyr::tibble(rcp = to_char(rec1),
+                                    filter = to_char(filter),
+                                    threshold = threshold,
+                                    rbf_sigma = rbf_sigma,
+                                    cost = cost),
+      parsnip_model = parsnip::svm_rbf(mode = "classification", cost = parsnip::varying(), rbf_sigma = parsnip::varying()) %>%
+        parsnip::set_engine("kernlab"),
+      rs_idx = rs_idx, 
+      data = train),
+    transform = map(rec1, rbf_sigma = c(0.01), cost = c(1)) #2^0
+  ),
+  profile_svm1 = target(
+    dplyr::bind_rows(a_svm1),
+    transform = combine(a_svm1)
+  ),
+  plot_profile_svm1 = profile_svm1 %>%
+    dplyr::select(threshold, filter, cost, rbf_sigma, auc, fold_nmb) %>%
+    ggplot(aes(x = threshold, y = auc, color = as.factor(rbf_sigma))) +
+    geom_line(aes(group = fold_nmb)) +
+    facet_wrap(~filter+cost, labeller = label_both),
   
   
   
@@ -237,9 +249,10 @@ plans$p02_rf <- drake_plan(
       set.seed(20190620)
       auc_parsnip(
         rec = rec_rf1, 
-        constellation = dplyr::tibble(rcp = to_char(rec1),
-                                      mtry = mtry,
-                                      trees = trees),
+        constellation = dplyr::tibble(
+          rcp = to_char(rec1),
+          mtry = mtry,
+          trees = trees),
         parsnip_model = parsnip::rand_forest(mtry = parsnip::varying(), trees = parsnip::varying()) %>%
           parsnip::set_engine("randomForest"),
         rs_idx = rs_idx,
