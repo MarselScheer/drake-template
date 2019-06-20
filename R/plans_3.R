@@ -188,18 +188,21 @@ plans$p02_glm_svm <- drake_plan(
 );plans$p02_glm_svm %>% dplyr::select(target, command) %>% tail(n = 2); try(plans$p02_glm_svm %>% drake_config() %>% vis_drake_graph(targets_only = TRUE))
 
 
-auc_rf <- function(rec, rs_idx, data, constellation, return_fit = FALSE, return_assessment_set = FALSE) {
+auc_parsnip <- function(rec, parsnip_model, constellation, rs_idx, data, return_fit = FALSE, return_assessment_set = FALSE) {
   purrr::map_dfr(seq_along(rec), function(i){
     
     analysis <- recipes::bake(rec[[i]], new_data = data[rs_idx$index[[i]]])
-    fit <- parsnip::rand_forest(mtry = !!constellation$mtry, trees = !!constellation$trees) %>%
-      parsnip::set_engine("randomForest") %>%
+    
+    parameters <- constellation
+    class(parameters) <- c(class(parameters), "param_grid")
+    fit <- parsnip_model %>% 
+      merge(parameters) %>% 
+      purrr::pluck(1) %>% 
       parsnip::fit(y ~ ., data = analysis)
     
     assessment <- recipes::bake(rec[[i]], new_data = data[rs_idx$indexOut[[i]]]) %>% 
       modelr::add_predictions(fit, type = "prob")
     assessment$pred <- assessment$pred$.pred_WS
-    
     ret <- constellation %>% 
       dplyr::mutate(fold_nmb = i, auc = auc(assessment))
     
@@ -230,13 +233,20 @@ plans$p02_rf <- drake_plan(
   ),
   
   a_rf1 = target(
-    auc_rf(rec_rf1, rs_idx, train, 
-            constellation = dplyr::tibble(rcp = to_char(rec1),
-                                          mtry = mtry,
-                                          trees = trees)),
+    { 
+      set.seed(20190620)
+      auc_parsnip(
+        rec = rec_rf1, 
+        constellation = dplyr::tibble(rcp = to_char(rec1),
+                                      mtry = mtry,
+                                      trees = trees),
+        parsnip_model = parsnip::rand_forest(mtry = parsnip::varying(), trees = parsnip::varying()) %>%
+          parsnip::set_engine("randomForest"),
+        rs_idx = rs_idx,
+        data = train)
+    },
     transform = cross(rec_rf1, mtry = c(5,10,20,30), trees = c(100,200))
   ),
-  
   
   profile_rf1 = target(
     dplyr::bind_rows(a_rf1),
@@ -309,15 +319,6 @@ plans$p02_bo_svm <- drake_plan(
   plot_bo_svm2 = bo_svm2$History %>% 
     ggplot(aes(x = rbf_sigma, y = cost, color = auc, size = auc, shape = auc == max(auc))) + 
     geom_point(),
-  # profile_svm1 = target(
-  #   dplyr::bind_rows(a_svm1),
-  #   transform = combine(a_svm1)
-  # ),
-  # plot_profile_svm1 = profile_svm1 %>%
-  #   dplyr::select(threshold, filter, cost, rbf_sigma, auc, fold_nmb) %>%
-  #   ggplot(aes(x = threshold, y = auc, color = as.factor(rbf_sigma))) +
-  #   geom_line(aes(group = fold_nmb)) +
-  #   facet_wrap(~filter+cost, labeller = label_both),
   
   trace = TRUE
 );plans$p02_bo_svm %>% dplyr::select(target, command) %>% tail(n = 2); try(plans$p02_bo_svm %>% drake_config() %>% vis_drake_graph(targets_only = TRUE))
