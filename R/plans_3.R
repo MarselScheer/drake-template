@@ -282,7 +282,13 @@ bayes_opt_svm <- function(rec, rs_idx, data, bounds, init_grid_dt = NULL, init_p
   FUN <- function(rbf_sigma, cost) {
     constellation <- data.frame(rbf_sigma = rbf_sigma, cost = cost)
     txt <- capture.output(
-      result <- auc_svm(rec, rs_idx, data, constellation)
+      result <- auc_parsnip(
+        rec = rec, 
+        constellation = constellation,
+        parsnip_model = parsnip::svm_rbf(mode = "classification", cost = parsnip::varying(), rbf_sigma = parsnip::varying()) %>%
+          parsnip::set_engine("kernlab"),
+        rs_idx = rs_idx, 
+        data = data)
     )
     list(Score = mean(result$auc), Pred = 0)
   }
