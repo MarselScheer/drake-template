@@ -13,7 +13,7 @@ source(file_in("./R/rmd_prep.R"))
 
 ```{r, echo=FALSE}
 library(drake)
-train <- readd(d)$train
+loadd(train) 
 loadd(d_cor)
 ```
 

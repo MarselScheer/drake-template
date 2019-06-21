@@ -18,7 +18,8 @@ library(drake)
 # Basic information
 
 ```{r, echo = FALSE}
-all <- dplyr::bind_rows(readd(d), .id = "df_name")
+loadd(train, test)
+all <- dplyr::bind_rows(list(train = train, test = test), .id = "df_name")
 DataExplorer::plot_intro(all)
 ```
 
@@ -26,8 +27,8 @@ DataExplorer::plot_intro(all)
 # df_status
 
 ```{r, echo=FALSE}
-funModeling::df_status(all, print_results = FALSE)# %>% 
-#  DT::datatable(options = list(pageLength = 100)) # "Self-invalidation"-issue
+funModeling::df_status(all, print_results = FALSE) #%>% 
+#DT::datatable(options = list(pageLength = 100)) # "Self-invalidation"-issue
 ```
 
 # sessionInfo

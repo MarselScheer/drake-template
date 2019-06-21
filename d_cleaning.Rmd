@@ -14,8 +14,8 @@ source(file_in("./R/rmd_prep.R"))
 ```{r, echo=FALSE}
 library(drake)
 
-train <- readd(d)$train
-all <- dplyr::bind_rows(readd(d), .id = "df_name")
+loadd(train, test)
+all <- dplyr::bind_rows(list(train = train, test = test), .id = "df_name")
 ```
 
 # df_status

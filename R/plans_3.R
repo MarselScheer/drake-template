@@ -162,6 +162,16 @@ plans$p01_rss <- drake_plan(
   trace = TRUE
 )
 
+plans$p01_reports <-
+  drake_plan(
+    rmd_cleaning = rmarkdown::render(knitr_in("d_cleaning.Rmd"), output_file = file_out("./reports/d_cleaning.md"), quiet = TRUE),
+    rmd_cleaning_DT = rmarkdown::render(knitr_in("d_cleaning_DT.Rmd"), output_file = file_out("./reports/d_cleaning_DT.html"), quiet = TRUE),
+    d_cor = train %>% dplyr::select_if(is.numeric) %>% corrr::correlate(),
+    rmd_first_glance = rmarkdown::render(knitr_in("d_first_glance.Rmd"), output_file = file_out("./reports/d_first_glance.html"), quiet = TRUE),
+    trace = TRUE
+  )
+
+
 
 # define recipes and train them on rs_idx$index
 # use trained recipes with glm and svm
