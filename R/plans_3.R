@@ -12,54 +12,25 @@ data_preprocess <- function(dt){
 }
 
 
-model_glm <- function(rec, idx, data) {
-  purrr::map(seq_along(rec), function(i){
-    d <- recipes::bake(rec[[i]], new_data = data[idx[[i]]])
-    glm(y ~ ., data = d, family = binomial(), model = F, y = F)
-  })
-}
-
 to_char <- function(x){
   deparse(substitute(x))
 }
 
-auc_glm <- function(rec, rs_idx, data, constellation, return_fit = FALSE, return_assessment_set = FALSE) {
+auc_parsnip <- function(rec, parsnip_model, constellation, rs_idx, data, return_fit = FALSE, return_assessment_set = FALSE) {
   purrr::map_dfr(seq_along(rec), function(i){
     
     analysis <- recipes::bake(rec[[i]], new_data = data[rs_idx$index[[i]]])
-    fit <- parsnip::logistic_reg(mode = "classification", penalty = 0, mixture = 0) %>%
-      parsnip::set_engine("glm") %>%
+    
+    parameters <- constellation
+    class(parameters) <- c(class(parameters), "param_grid")
+    fit <- parsnip_model %>% 
+      merge(parameters) %>% 
+      purrr::pluck(1) %>% 
       parsnip::fit(y ~ ., data = analysis)
     
     assessment <- recipes::bake(rec[[i]], new_data = data[rs_idx$indexOut[[i]]]) %>% 
       modelr::add_predictions(fit, type = "prob")
     assessment$pred <- assessment$pred$.pred_WS
-    ret <- constellation %>% 
-      dplyr::mutate(fold_nmb = i, auc = auc(assessment))
-
-    if (return_fit) {
-      ret$fit <- list(fit)
-    }
-    if (return_assessment_set) {
-      ret$assessment <- list(assessment)
-    }
-    
-    ret
-  })
-}
-
-auc_svm <- function(rec, rs_idx, data, constellation, return_fit = FALSE, return_assessment_set = FALSE) {
-  purrr::map_dfr(seq_along(rec), function(i){
-    
-    analysis <- recipes::bake(rec[[i]], new_data = data[rs_idx$index[[i]]])
-    fit <- parsnip::svm_rbf(mode = "classification", cost = !!constellation$cost, rbf_sigma = !!constellation$rbf_sigma) %>%
-      parsnip::set_engine("kernlab") %>%
-      parsnip::fit(y ~ ., data = analysis)
-    
-    assessment <- recipes::bake(rec[[i]], new_data = data[rs_idx$indexOut[[i]]]) %>% 
-      modelr::add_predictions(fit, type = "prob")
-    assessment$pred <- assessment$pred$.pred_WS
-    
     ret <- constellation %>% 
       dplyr::mutate(fold_nmb = i, auc = auc(assessment))
     
@@ -73,11 +44,45 @@ auc_svm <- function(rec, rs_idx, data, constellation, return_fit = FALSE, return
     ret
   })
 }
-
 
 
 auc <- function(assessment) {
   ModelMetrics::auc(assessment$y != "PS", assessment$pred)
+}
+
+
+bayes_opt_svm <- function(rec, rs_idx, data, bounds, init_grid_dt = NULL, init_points = 0, n_iter) {
+  h.log_start()
+  
+  FUN <- function(rbf_sigma, cost) {
+    constellation <- data.frame(rbf_sigma = rbf_sigma, cost = cost)
+    txt <- capture.output(
+      result <- auc_parsnip(
+        rec = rec, 
+        constellation = constellation,
+        parsnip_model = parsnip::svm_rbf(mode = "classification", cost = parsnip::varying(), rbf_sigma = parsnip::varying()) %>%
+          parsnip::set_engine("kernlab"),
+        rs_idx = rs_idx, 
+        data = data)
+    )
+    list(Score = mean(result$auc), Pred = 0)
+  }
+  
+  ret <-
+    rBayesianOptimization::BayesianOptimization(
+      FUN,
+      bounds = bounds,
+      init_grid_dt = init_grid_dt,
+      init_points = init_points,
+      n_iter = n_iter,
+      acq = "ucb",
+      verbose = TRUE
+    )
+  
+  ret$History <- dplyr::rename(ret$History, auc = Value)
+  
+  h.log_end()
+  ret
 }
 
 
@@ -185,49 +190,8 @@ plans$p02_glm_svm <- drake_plan(
     geom_line(aes(group = fold_nmb)) +
     facet_wrap(~filter+cost, labeller = label_both),
   
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   trace = TRUE
-);plans$p02_glm_svm %>% dplyr::select(target, command) %>% tail(n = 2); try(plans$p02_glm_svm %>% drake_config() %>% vis_drake_graph(targets_only = TRUE))
-
-
-auc_parsnip <- function(rec, parsnip_model, constellation, rs_idx, data, return_fit = FALSE, return_assessment_set = FALSE) {
-  purrr::map_dfr(seq_along(rec), function(i){
-    
-    analysis <- recipes::bake(rec[[i]], new_data = data[rs_idx$index[[i]]])
-    
-    parameters <- constellation
-    class(parameters) <- c(class(parameters), "param_grid")
-    fit <- parsnip_model %>% 
-      merge(parameters) %>% 
-      purrr::pluck(1) %>% 
-      parsnip::fit(y ~ ., data = analysis)
-    
-    assessment <- recipes::bake(rec[[i]], new_data = data[rs_idx$indexOut[[i]]]) %>% 
-      modelr::add_predictions(fit, type = "prob")
-    assessment$pred <- assessment$pred$.pred_WS
-    ret <- constellation %>% 
-      dplyr::mutate(fold_nmb = i, auc = auc(assessment))
-    
-    if (return_fit) {
-      ret$fit <- list(fit)
-    }
-    if (return_assessment_set) {
-      ret$assessment <- list(assessment)
-    }
-    
-    ret
-  })
-}
+)#;plans$p02_glm_svm %>% dplyr::select(target, command) %>% tail(n = 2); try(plans$p02_glm_svm %>% drake_config() %>% vis_drake_graph(targets_only = TRUE))
 
 
 plans$p02_rf <- drake_plan(
@@ -272,67 +236,40 @@ plans$p02_rf <- drake_plan(
     facet_wrap(~trees),
   
   trace = TRUE
-);plans$p02_rf %>% dplyr::select(target, command) %>% tail(n = 20); try(plans$p02_rf %>% drake_config() %>% vis_drake_graph(targets_only = TRUE))
+)#;plans$p02_rf %>% dplyr::select(target, command) %>% tail(n = 20); try(plans$p02_rf %>% drake_config() %>% vis_drake_graph(targets_only = TRUE))
 
 
 
-bayes_opt_svm <- function(rec, rs_idx, data, bounds, init_grid_dt = NULL, init_points = 0, n_iter) {
-  h.log_start()
-  
-  FUN <- function(rbf_sigma, cost) {
-    constellation <- data.frame(rbf_sigma = rbf_sigma, cost = cost)
-    txt <- capture.output(
-      result <- auc_parsnip(
-        rec = rec, 
-        constellation = constellation,
-        parsnip_model = parsnip::svm_rbf(mode = "classification", cost = parsnip::varying(), rbf_sigma = parsnip::varying()) %>%
-          parsnip::set_engine("kernlab"),
-        rs_idx = rs_idx, 
-        data = data)
-    )
-    list(Score = mean(result$auc), Pred = 0)
-  }
-
-  ret <-
-    rBayesianOptimization::BayesianOptimization(
-      FUN,
-      bounds = bounds,
-      init_grid_dt = init_grid_dt,
-      init_points = init_points,
-      n_iter = n_iter,
-      acq = "ucb",
-      verbose = TRUE
-    )
-  
-  ret$History <- dplyr::rename(ret$History, auc = Value)
-  
-  h.log_end()
-  ret
-}
 
 plans$p02_bo_svm <- drake_plan(
   max_expand = MAX_EXPAND,
   
   bo_svm1 = target(
-    bayes_opt_svm(rec = rec1_rcp_step_pca_0.5, 
-                  rs_idx = rs_idx, 
-                  data = train,
-                  bounds = list(rbf_sigma = c(0.00001, 0.1), cost = c(0.00001, 64)), 
-                  init_grid_dt = NULL, 
-                  init_points = 10,
-                  n_iter = 2
-    )
+    {
+      set.seed(20190621)
+      bayes_opt_svm(rec = rec1_rcp_step_pca_0.5, 
+                    rs_idx = rs_idx, 
+                    data = train,
+                    bounds = list(rbf_sigma = c(0.00001, 0.1), cost = c(0.00001, 64)), 
+                    init_grid_dt = NULL, 
+                    init_points = 10,
+                    n_iter = 2
+      )
+    }
   ),
 
   bo_svm2 = target(
-    bayes_opt_svm(rec = rec1_rcp_step_pca_0.5, 
-                  rs_idx = rs_idx, 
-                  data = train,
-                  bounds = list(rbf_sigma = c(0.00001, 0.1), cost = c(0.00001, 64)), 
-                  init_grid_dt = bo_svm1$History %>% dplyr::select(rbf_sigma, cost, Value = auc), 
-                  init_points = 0,
-                  n_iter = 2
-    )
+    {
+      set.seed(201906212)
+      bayes_opt_svm(rec = rec1_rcp_step_pca_0.5, 
+                    rs_idx = rs_idx, 
+                    data = train,
+                    bounds = list(rbf_sigma = c(0.00001, 0.1), cost = c(0.00001, 64)), 
+                    init_grid_dt = bo_svm1$History %>% dplyr::select(rbf_sigma, cost, Value = auc), 
+                    init_points = 0,
+                    n_iter = 2
+      )
+    }
   ),
   
   plot_bo_svm2 = bo_svm2$History %>% 
@@ -340,5 +277,5 @@ plans$p02_bo_svm <- drake_plan(
     geom_point(),
   
   trace = TRUE
-);plans$p02_bo_svm %>% dplyr::select(target, command) %>% tail(n = 2); try(plans$p02_bo_svm %>% drake_config() %>% vis_drake_graph(targets_only = TRUE))
+)#;plans$p02_bo_svm %>% dplyr::select(target, command) %>% tail(n = 2); try(plans$p02_bo_svm %>% drake_config() %>% vis_drake_graph(targets_only = TRUE))
 
