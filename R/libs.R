@@ -1,5 +1,7 @@
 library(tictoc)
 library(rBayesianOptimization)
+library(parsnip)
+library(dials)
 library(skimr)
 library(styler)
 library(RPushbullet)
