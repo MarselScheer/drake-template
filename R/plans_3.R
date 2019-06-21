@@ -16,11 +16,29 @@ to_char <- function(x){
   deparse(substitute(x))
 }
 
-auc_parsnip <- function(rec, parsnip_model, constellation, rs_idx, data, return_fit = FALSE, return_assessment_set = FALSE) {
+#' For a defined set of K folds a parsnip-model model is fitted K times and assessed K times
+#'
+#' @param rec trained recipe
+#' @param parsnip_model the parsnip model for training
+#' @param constellation at least the parameters needed by the parsnip model
+#' @param rs_idx list with entries index (analysis-set) and indexOut (assessment-set). 
+#'    index and indexOut are again lists, each with K entries. model is fit on index and auc is estimated on indexOut.
+#' @param data data used for training
+#' @param return_analysis_fit if the returned object contains the K models fitted to the K entries in rs_idx$index
+#' @param return_assessment_set if the returned object contains the K assessment-sets (defined by the K entries in rs_idx$indexOut) 
+#'    with the predictions produced by the corresponding K fitted models.
+#'
+#' @return auc for models trained on data-sets defined by rs_idx$index and assessed on rs_idx$indexOut. 
+#'    Optional are the model fits on rs_idx$index and the predictions on rs_idx$indexOut
+auc_parsnip <- function(rec, parsnip_model, constellation, rs_idx, data, return_analysis_fit = FALSE, return_assessment_set = FALSE) {
   purrr::map_dfr(seq_along(rec), function(i){
     
+    # apply recipe to the analysis-data. 
+    # could be improved, because if the recipe was trained with 'retain = TRUE', then 
+    # the analysis-set is part of the trained recipe
     analysis <- recipes::bake(rec[[i]], new_data = data[rs_idx$index[[i]]])
     
+    # set the missing parameters in the parsnip-model and fit the model
     parameters <- constellation
     class(parameters) <- c(class(parameters), "param_grid")
     fit <- parsnip_model %>% 
@@ -28,17 +46,18 @@ auc_parsnip <- function(rec, parsnip_model, constellation, rs_idx, data, return_
       purrr::pluck(1) %>% 
       parsnip::fit(y ~ ., data = analysis)
     
+    # add predictions to the assessment-set
     assessment <- recipes::bake(rec[[i]], new_data = data[rs_idx$indexOut[[i]]]) %>% 
       modelr::add_predictions(fit, type = "prob")
     assessment$pred <- assessment$pred$.pred_WS
+
     ret <- constellation %>% 
       dplyr::mutate(fold_nmb = i, auc = auc(assessment))
-    
-    if (return_fit) {
-      ret$fit <- list(fit)
+    if (return_analysis_fit) {
+      ret$analysis_fit <- list(fit)
     }
     if (return_assessment_set) {
-      ret$assessment <- list(assessment)
+      ret$assessment_set <- list(assessment)
     }
     
     ret
@@ -47,13 +66,36 @@ auc_parsnip <- function(rec, parsnip_model, constellation, rs_idx, data, return_
 
 
 auc <- function(assessment) {
-  ModelMetrics::auc(assessment$y != "PS", assessment$pred)
+  ModelMetrics::auc(assessment$y == "WS", assessment$pred)
 }
 
 
+#' Applies bayes optimization to tune radial-base-function-svms with respect to AUC
+#'
+#' @param rec trained recipe
+#' @param rs_idx list with entries index (analysis-set) and indexOut (assessment-set). 
+#'    index and indexOut are again lists, each with K entries. model is fit on index and auc is estimated on indexOut. 
+#' @param data data used for training
+#' @param bounds for the tuning-parameter rbf_sigma and cost
+#' @param init_grid_dt usually the History produced by rBayesianOptimization::BayesianOptimization in order to continue the tuning-process. 
+#'    User specified points to sample the target function, should be a data.frame or data.table with identical column names as bounds. User 
+#'    can add one "Value" column at the end, if target function is pre-sampled.
+#' @param init_points Number of randomly chosen points to sample the target function before Bayesian Optimization fitting the Gaussian Process.
+#' @param n_iter Total number of times the Bayesian Optimization is to repeated.
+#'
+#' @return 
+#' a list of Bayesian Optimization result is returned:
+#'    Best_Par a named vector of the best hyperparameter set found
+#'    Best_Value the value of metrics achieved by the best hyperparameter set
+#'    History a data.table of the bayesian optimization history
+#'    Pred a data.table with validation/cross-validation prediction for each round of bayesian optimization history
+#' @export
+#'
+#' @examples
 bayes_opt_svm <- function(rec, rs_idx, data, bounds, init_grid_dt = NULL, init_points = 0, n_iter) {
   h.log_start()
   
+  # define function to be used during tuning
   FUN <- function(rbf_sigma, cost) {
     constellation <- data.frame(rbf_sigma = rbf_sigma, cost = cost)
     txt <- capture.output(
@@ -101,6 +143,10 @@ plans$p00_general <-
     ABSTRACT = paste("Lorem ipsum dolor sit amet, consetetur sadipscing elitr")
   )
 
+
+
+# split data in train and test
+# define resampling scheme for train (rs_idx$index used for fitting, rs_idx$indexOut used for assessment)
 plans$p01_rss <- drake_plan(
   max_expand = MAX_EXPAND,
   
@@ -116,6 +162,9 @@ plans$p01_rss <- drake_plan(
   trace = TRUE
 )
 
+
+# define recipes and train them on rs_idx$index
+# use trained recipes with glm and svm
 plans$p02_glm_svm <- drake_plan(
   max_expand = MAX_EXPAND,
   
@@ -194,6 +243,9 @@ plans$p02_glm_svm <- drake_plan(
 )#;plans$p02_glm_svm %>% dplyr::select(target, command) %>% tail(n = 2); try(plans$p02_glm_svm %>% drake_config() %>% vis_drake_graph(targets_only = TRUE))
 
 
+
+# define and train simple recipe
+# use trained recipe to fit a random forest 
 plans$p02_rf <- drake_plan(
   max_expand = MAX_EXPAND,
   
@@ -240,7 +292,8 @@ plans$p02_rf <- drake_plan(
 
 
 
-
+# apply (two) bayes optimization to tune radial-base-function-svm. the second bayes optimization is built upon the first one
+# use one fixed trained recipe
 plans$p02_bo_svm <- drake_plan(
   max_expand = MAX_EXPAND,
   
