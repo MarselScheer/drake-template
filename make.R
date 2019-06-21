@@ -5,6 +5,8 @@ source("R/libs.R")
 pkgconfig::set_config("drake::strings_in_dots" = "literals")
 
 source("R/funs.R")
+# plans_3 is the most compressed (with respect to targets) plan. 
+# plans_1/2 trained recipes and models are stored exlicitly as targets
 source("R/plans_3.R")
 
 options(error = function() {
