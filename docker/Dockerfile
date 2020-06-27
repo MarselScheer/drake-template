@@ -30,4 +30,16 @@ RUN git clone --depth 1 https://github.com/hlissner/doom-emacs ~/.emacs.d \
     && mkdir -p /tmp/hostfs \
     && ln -s /tmp/hostfs ~/hostfs
 
+
+# have no idea why this is the only way
+# to add company-dabbrev-code to the 
+# backend. Just follow https://github.com/emacs-ess/ESS/issues/955
+RUN echo "(require 'company-dabbrev-code)\n\
+(add-to-list 'company-backends #'company-dabbrev-code)\n\
+(setq company-idle-delay 0)\n\
+(setq company-show-numbers t)\n\
+(after! ess-r-mode\n\
+  (set-company-backend! 'ess-r-mode\n\
+    '(:separate company-R-library company-R-args company-R-objects company-dabbrev-code)))" >> ~/.doom.d/config.el
+
 USER root
