@@ -14,6 +14,9 @@ RUN apt-get update && apt-get install -y \
        styler \
        drake \
        visNetwork \
+       glue \
+       logger \
+       RPushbullet \
     && ln -sf /usr/share/zoneinfo/Europe/Berlin /etc/localtime \
     && git config --global user.email "scheer@freescience.de" \
     && git config --global user.name "Marsel Scheer" \
