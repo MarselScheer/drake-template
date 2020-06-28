@@ -49,5 +49,13 @@ RUN install2.r --error \
        drake \
        visNetwork
 
+USER rstudio
+
 RUN sed -i "s/(setq doom-theme 'doom-one)/(setq doom-theme 'doom-peacock)/g" ~/.doom.d/config.el \
-    && echo '(setq-default evil-escape-key-sequence "kj")' >> ~/.doom.d/config.el
+    && echo '(setq-default evil-escape-key-sequence "kj")' >> ~/.doom.d/config.el \
+    && echo '(setq confirm-kill-emacs nil)' >> ~/.doom.d/config.el \
+    && echo "(after! ess-r-mode\n\
+  (setq-default ess-style 'RStudio-))" >> ~/.doom.d/config.el
+
+
+USER root
