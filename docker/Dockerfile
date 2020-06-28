@@ -43,3 +43,10 @@ RUN echo "(require 'company-dabbrev-code)\n\
     '(:separate company-R-library company-R-args company-R-objects company-dabbrev-code)))" >> ~/.doom.d/config.el
 
 USER root
+
+RUN install2.r --error \
+       --deps TRUE \
+       drake \
+       visNetwork
+
+RUN sed -i "s/(setq doom-theme 'doom-one)/(setq doom-theme 'doom-peacock)/g" ~/.doom.d/config.el
