@@ -49,4 +49,5 @@ RUN install2.r --error \
        drake \
        visNetwork
 
-RUN sed -i "s/(setq doom-theme 'doom-one)/(setq doom-theme 'doom-peacock)/g" ~/.doom.d/config.el
+RUN sed -i "s/(setq doom-theme 'doom-one)/(setq doom-theme 'doom-peacock)/g" ~/.doom.d/config.el \
+    && echo '(setq-default evil-escape-key-sequence "kj")' >> ~/.doom.d/config.el
