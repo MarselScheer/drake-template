@@ -72,8 +72,9 @@ h.log_start <- function(send_pushbullet = FALSE) {
   if (send_pushbullet) {
     h.send_pushbullet(msg)
   }
-  flog.info(msg)
+  logger::log_info(msg)
 }
+
 h.log_end <- function(send_pushbullet = FALSE) {
   mc <- sys.call(sys.parent())
   mc <- capture.output(print(mc))
