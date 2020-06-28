@@ -1,6 +1,6 @@
 #-# helper-functions
 
-h.send_pushbullet <- function(msg, title = NULL) {
+h_send_pushbullet <- function(msg, title = NULL) {
   
   # pushbullet notifications can only be send
   # if ~/.rpushbullet.json exist
@@ -25,7 +25,7 @@ h.send_pushbullet <- function(msg, title = NULL) {
   ))
 }
 
-h.send_plot_pushbullet <- function(p, title = NULL){
+h_send_plot_pushbullet <- function(p, title = NULL){
   # pushbullet notifications can only be send
   # if ~/.rpushbullet.json exist
   # should follow
@@ -53,7 +53,7 @@ h.send_plot_pushbullet <- function(p, title = NULL){
 }
 
 
-h.lowercase_names <- function(df) {
+h_lowercase_names <- function(df) {
   lc <- tolower(names(df))
   if (anyDuplicated(lc) > 0) {
     stop("lowercase varnames makes names ambiguous")
@@ -63,53 +63,53 @@ h.lowercase_names <- function(df) {
 }
 
 
-h.log_start <- function(send_pushbullet = FALSE) {
+h_log_start <- function(send_pushbullet = FALSE) {
   mc <- sys.call(sys.parent())
   mc <- capture.output(print(mc))
   mc <- paste0(trimws(mc), collapse = " ")
   
   msg <- glue::glue("start {mc}")
   if (send_pushbullet) {
-    h.send_pushbullet(msg)
+    h_send_pushbullet(msg)
   }
   logger::log_info(msg)
 }
 
-h.log_end <- function(send_pushbullet = FALSE) {
+h_log_end <- function(send_pushbullet = FALSE) {
   mc <- sys.call(sys.parent())
   mc <- capture.output(print(mc))
   mc <- paste0(trimws(mc), collapse = " ")
 
   msg <- glue::glue("end {mc}")
   if (send_pushbullet) {
-    h.send_pushbullet(msg)
+    h_send_pushbullet(msg)
   }
 }
 
-h.create_caption_txt <- function(desc, author, analysis_unique_id) {
+h_create_caption_txt <- function(desc, author, analysis_unique_id) {
   glue("{desc}
        {author}
        {analysis_unique_id}
        {date()}")
 }
 
-h.plot_info <- function(desc, author, analysis_unique_id) {
-  ggplot2::labs(caption = h.create_caption_txt(desc, author, analysis_unique_id))
+h_plot_info <- function(desc, author, analysis_unique_id) {
+  ggplot2::labs(caption = h_create_caption_txt(desc, author, analysis_unique_id))
 }
 
-h.plot_info_font_size <- function(font.size) {
+h_plot_info_font_size <- function(font.size) {
   ggplot2::theme(plot.caption = element_text(size = font.size))
 }
 
-h.html_to_human_readable <- function(s) {
+h_html_to_human_readable <- function(s) {
   s <- gsub("&#124;", "  or  ", s, fixed = TRUE)
   s
 }
 
-h.annotate_with_df <- function(df, position = c("top-left", "top-right", "bottom-left", "bottom-right"), size = 3) {
+h_annotate_with_df <- function(df, position = c("top-left", "top-right", "bottom-left", "bottom-right"), size = 3) {
   df_str <- knitr::kable(df) %>%
     as.character() %>%
-    h.html_to_human_readable() %>%
+    h_html_to_human_readable() %>%
     paste(collapse = "\n")
   
   position <- match.arg(position)
