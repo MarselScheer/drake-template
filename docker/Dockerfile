@@ -52,6 +52,9 @@ RUN git clone --depth 1 https://github.com/hlissner/doom-emacs ~/.emacs.d \
     (setq ess-eval-visibly 't)\n\ 
     )\n\
   )" >> ~/.doom.d/config.el \
+# set doom key-bindings
+## save during insert mode
+    && echo "(map! :i \"C-x C-s\" #'save-buffer)" >> ~/.doom.d/config.el \
 # create directory for mounting the host file system
     && mkdir -p /tmp/hostfs \
     && ln -s /tmp/hostfs ~/hostfs 
