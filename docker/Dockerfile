@@ -30,8 +30,9 @@ USER rstudio
 RUN git clone --depth 1 https://github.com/hlissner/doom-emacs ~/.emacs.d \
     && ~/.emacs.d/bin/doom --yes install \
     && sed -i 's/;;ess/ess/g' ~/.doom.d/init.el \
-    && ~/.emacs.d/bin/doom sync \
-    && sed -i "s/display-line-numbers-type t/display-line-numbers-type 'relative/g" ~/.doom.d/config.el \
+    && ~/.emacs.d/bin/doom sync
+
+RUN sed -i "s/display-line-numbers-type t/display-line-numbers-type 'relative/g" ~/.doom.d/config.el \
     && sed -i "s/(setq doom-theme 'doom-one)/(setq doom-theme 'doom-peacock)/g" ~/.doom.d/config.el \
     && echo '(setq-default evil-escape-key-sequence "kj")' >> ~/.doom.d/config.el \
     && echo '(setq confirm-kill-emacs nil)' >> ~/.doom.d/config.el \
