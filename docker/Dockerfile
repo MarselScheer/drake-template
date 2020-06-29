@@ -45,9 +45,13 @@ RUN git clone --depth 1 https://github.com/hlissner/doom-emacs ~/.emacs.d \
 (after! ess-r-mode\n\
   (set-company-backend! 'ess-r-mode\n\
     '(:separate company-R-library company-R-args company-R-objects company-dabbrev-code)))" >> ~/.doom.d/config.el \
-# set indentation style
+# set general behaviour like indentation and evaluation
     && echo "(after! ess-r-mode\n\
-  (setq-default ess-style 'RStudio-))" >> ~/.doom.d/config.el \
+  (progn\n\ 
+    (setq-default ess-style 'RStudio-)\n\ 
+    (setq ess-eval-visibly 't)\n\ 
+    )\n\
+  )" >> ~/.doom.d/config.el \
 # create directory for mounting the host file system
     && mkdir -p /tmp/hostfs \
     && ln -s /tmp/hostfs ~/hostfs 
