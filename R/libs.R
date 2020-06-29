@@ -1,3 +1,4 @@
+library(dplyr)
 library(drake)
 library(logger)
 library(glue)
