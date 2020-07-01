@@ -8,6 +8,18 @@ suppress_all <- function(...) {
   return(el[[1]])
 }
 
+
+
+# NOTE (infrastructure): restrict the execution to a few targets here
+TARGETS <- NULL
+#TARGETS <- "my_data"
+TARGETS_REGEXP <- NULL
+#TARGETS_REGEXP <- "data$"
+
+logger::log_info(paste("Save various settings that are loaded",
+  "by _drake.R when execute_plans() invokes r_make()"))
+save(TARGETS, TARGETS_REGEXP, file = ".settings.Rdata")
+
 logger::log_info("Create drake-config")
 source("_drake.R")
 
@@ -25,6 +37,4 @@ execute_plans <- function(NCPUS = 1) {
   h_send_pushbullet(
     glue::glue("drake done. plans: {paste0(unique(sub_plans$df_name), collapse = ', ')}"))
 }
-logger::log_info("Run execute_plans() to start drake processing the plans.")
-
-
+logger::log_info("Call execute_plans() to start drake processing the plans.")
