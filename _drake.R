@@ -15,10 +15,9 @@ if (!dir.exists("reports")) {
   dir.create("reports", mode = "0755")
 }
 
-sub_plans <- plans #[1:13]
-logger::log_info(glue::glue("bind plans: {paste(sort(names(sub_plans)), collapse = ', ')}"))
+logger::log_info(glue::glue("bind plans: {paste(sort(names(plans)), collapse = ', ')}"))
 plan <-
-  sub_plans %>%
+  plans %>%
   dplyr::bind_rows(.id = "df_name") %>%
   dplyr::arrange(df_name)
 
