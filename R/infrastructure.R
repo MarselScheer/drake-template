@@ -41,7 +41,14 @@ filter_selected_targets <- function(plan) {
   return(ret)
 }
 
-execute_plans <- function(NCPUS = 1) {
+execute_plans <- function(NCPUS = 1, plan = plan) {
+  cat("\n\nConfirm settings:\n\n")
+  filter_selected_targets(plan = plan)
+  answer <- readline(prompt = "Start drake? (y/N) ")
+  if (answer != "y"){
+    logger::log_error("Manually aborted")
+    stop("Manually aborted")
+  }
   logger::log_info("Starting drake")
   drake::r_make()
   logger::log_info("drake done.")
