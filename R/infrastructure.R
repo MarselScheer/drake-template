@@ -41,9 +41,22 @@ filter_selected_targets <- function(plan) {
   return(ret)
 }
 
+get_num_cpus <- function() {
+  load(".ncpus.Rdata")
+  ret <- NCPUS
+  logger::log_info(sprintf("Numbers of CPUS to be used: %s", ret))
+  future::plan(future::sequential)
+  if (ret > 1) {
+    future::plan(future::multiprocess)
+  }
+  return(ret)
+}
+
 execute_plans <- function(NCPUS = 1, plan = plan) {
+  save(NCPUS, file = ".ncpus.Rdata")
   cat("\n\nConfirm settings:\n\n")
   filter_selected_targets(plan = plan)
+  get_num_cpus()
   answer <- readline(prompt = "Start drake? (y/N) ")
   if (answer != "y"){
     logger::log_error("Manually aborted")
