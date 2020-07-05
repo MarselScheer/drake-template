@@ -85,8 +85,13 @@ get_num_cpus <- function() {
   return(ret)
 }
 
-execute_plans <- function(NCPUS = 1, plan = plan) {
+set_num_cpus <- function(cpus = 1) {
+  NCPUS <- cpus
   save(NCPUS, file = ".ncpus.Rdata")
+  return(invisible(NULL))
+}
+
+execute_plans <- function(plan = plan) {
   cat("\n\nConfirm settings:\n\n")
   filter_selected_targets(plan = plan)
   get_num_cpus()
