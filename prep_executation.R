@@ -15,6 +15,7 @@ logger::log_info("Outdated objects:")
 suppress_all(drake::r_outdated())
 
 logger::log_info("Predicted runtimes")
-suppress_all((drake::r_predict_runtime(jobs = 1)))
+set_num_cpus(cpus = 2)
+suppress_all((drake::r_predict_runtime(jobs = get_num_cpus())))
 
 logger::log_info("Call execute_plans() to start drake processing the plans.")
