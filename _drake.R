@@ -1,3 +1,4 @@
+logger::log_info("Load _drake.R")
 source("R/infrastructure.R")
 
 NCPUS <- get_num_cpus()
@@ -6,6 +7,7 @@ if (NCPUS > 1) {
   future::plan(future::multiprocess)
 }
 
+logger::log_info("Loaded _drake.R")
 config <- drake::drake_config(
   plan = plan,
   targets = filter_selected_targets(plan = plan),
