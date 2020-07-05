@@ -45,7 +45,13 @@ restrict_targets <- function(targets = NULL, targets_regexp = NULL, ...) {
 }
 
 filter_selected_targets <- function(plan) {
-  load(".settings.Rdata")
+  fname_settings <- ".settings.Rdata"
+  if (!file.exists(fname_settings)) {
+    logger::log_info("Targets to be build: ALL")
+    return(NULL)
+  }
+
+  load(fname_settings)
   ret <- c(TARGETS)
   if (!is.null(TARGETS_REGEXP)) {
     ret <- c(ret,
@@ -63,7 +69,13 @@ filter_selected_targets <- function(plan) {
 }
 
 get_num_cpus <- function() {
-  load(".ncpus.Rdata")
+  fname_cpu_settings <- ".ncpus.Rdata"
+  if (!file.exists(fname_cpu_settings)) {
+    logger::log_warn("Number of CPUs not defined. Use 1 CPU.")
+    return(1)
+  }
+
+  load(fname_cpu_settings)
   ret <- NCPUS
   logger::log_info(sprintf("Numbers of CPUS to be used: %s", ret))
   future::plan(future::sequential)
