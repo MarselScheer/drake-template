@@ -23,6 +23,27 @@ suppress_all <- function(...) {
   return(el[[1]])
 }
 
+##' Restrict targets used by drake
+##'
+##' @param targets vector of targets to be build by drake
+##' @param targets_regexp regular expression that defines the
+##'    targets to be build by drake
+##' @param ... currently only used for convenience. This way one
+##'    comment out the actual target-parameters without the need
+##'    to take care of commas.
+##' @return no explicit return-value
+restrict_targets <- function(targets = NULL, targets_regexp = NULL, ...) {
+
+  TARGETS <- targets
+  TARGETS_REGEXP <- targets_regexp
+  logger::log_info(paste("Save various settings that are loaded",
+    "by _drake.R when execute_plans() invokes r_make()"))
+  save(TARGETS, TARGETS_REGEXP, file = ".settings.Rdata")
+
+  logger::log_info("Create drake-config")
+  source("_drake.R")
+}
+
 filter_selected_targets <- function(plan) {
   load(".settings.Rdata")
   ret <- c(TARGETS)
