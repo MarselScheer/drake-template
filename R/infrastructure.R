@@ -65,6 +65,11 @@ execute_plans <- function(NCPUS = 1, plan = plan) {
   logger::log_info("Starting drake")
   drake::r_make()
   logger::log_info("drake done.")
+  cat("\n\n") # want some space to set apart the log-msg of the next run
   h_send_pushbullet(
     glue::glue("drake done. plans: {paste0(unique(sub_plans$df_name), collapse = ', ')}"))
+
+  # it is distracting to see output in the console after
+  # the last logger-msg
+  return(invisible(NULL))
 }
