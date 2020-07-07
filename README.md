@@ -29,6 +29,20 @@ The following files follow the recommended pattern:
 * R/funs.R defines the functions that are used in the plans
 * R/libs.R defines the libraries to be used
 
+# Batch-mode
+
+You can build targets using the following commands, where nohup
+will allow you to also disconnect from the computer:
+
+* nohup Rscript -e "source('R/infrastructure.R'); drake::make(plan)" &
+* nohup Rscript -e "source('R/infrastructure.R'); drake::r_make()" &
+* nohup Rscript -e "source('R/infrastructure.R'); execute_plans()" &
+
+With a pushbullet-key in place all three commands will send a 
+pushbullet notification in case an error happend during the
+build. Additionally, execute_plans() will also send a pushbullet
+notification once all targets were build.
+
 # RPushbullet
 
 With Pushbullet you can sent notifications for instance to
@@ -52,5 +66,5 @@ The template uses renv to keep track of the package dependencies,
 where the packages can be restored with:
 ~~~~
 install.packages("renv") # in case it is not already installed
-renv::restore()
+renv::init()
 ~~~~
