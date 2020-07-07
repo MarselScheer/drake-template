@@ -128,17 +128,18 @@ execute_plans <- function() {
   cat("\n\nConfirm settings:\n\n")
   filter_selected_targets(plan = plan)
   get_num_cpus()
-  answer <- readline(prompt = "Start drake? (y/N) ")
-  if (answer != "y"){
-    logger::log_error("Manually aborted")
-    stop("Manually aborted")
+  if (interactive()) {
+    answer <- readline(prompt = "Start drake? (y/N) ")
+    if (answer != "y"){
+      logger::log_error("Manually aborted")
+      stop("Manually aborted")
+    }
   }
   logger::log_info("Start drake-run")
   drake::r_make()
   logger::log_info("drake done")
   cat("\n\n") # want some space to set apart the log-msg of the next run
-  h_send_pushbullet(
-    glue::glue("drake done. plans: {paste0(unique(sub_plans$df_name), collapse = ', ')}"))
+  h_send_pushbullet("drake done")
 
   # it is distracting to see output in the console after
   # the last logger-msg
