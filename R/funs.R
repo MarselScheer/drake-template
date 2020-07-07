@@ -1,3 +1,6 @@
+#-# define your functions here
+
+
 #-# helper-functions
 
 h_send_pushbullet <- function(msg, title = NULL) {
