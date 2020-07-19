@@ -9,10 +9,16 @@ plans[["gen_data"]] <- drake::drake_plan(
 
 plans[["model"]] <- drake::drake_plan(
   my_model = lm(formula = b ~ a, data = my_data),
-  report =  rmarkdown::render(
-    input = drake::knitr_in("presentation_template.Rmd"),
-    output_file = drake::file_out("reports/template.html"),
-    quiet = TRUE)
+  report =  drake::target(
+    command = {
+      rmarkdown::render(
+        input = drake::knitr_in("reports/presentation_template.Rmd"),
+        quiet = TRUE)
+      # file_out is necessary to rebuild the target if the html
+      # was modified/deleted
+      drake::file_out("reports/presentation_template.html")
+    })
+
 )
 
 logger::log_info(glue::glue("bind plans: {paste(sort(names(plans)), collapse = ', ')}"))

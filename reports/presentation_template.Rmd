@@ -2,11 +2,6 @@
 title: "Report Template"
 author: '`r readd(AUTHOR)`'
 date: '`r Sys.Date()`, Analysis ID `r readd(ANALYSIS_UNIQUE_ID)`'
-output:
-  slidy_presentation:
-    self_contained: true
-    css: "presentation_style.css"
-  html_document: default
 ---
 
 
