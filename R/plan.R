@@ -8,9 +8,12 @@ plans[["gen_data"]] <- drake::drake_plan(
 )
 
 plans[["model"]] <- drake::drake_plan(
-  my_model = lm(formula = b ~ a, data = my_data)
+  my_model = lm(formula = b ~ a, data = my_data),
+  report =  rmarkdown::render(
+    input = drake::knitr_in("presentation_template.Rmd"),
+    output_file = drake::file_out("reports/template.html"),
+    quiet = TRUE)
 )
-
 
 logger::log_info(glue::glue("bind plans: {paste(sort(names(plans)), collapse = ', ')}"))
 plan <-

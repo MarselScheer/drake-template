@@ -3,17 +3,20 @@ title: "Report Template"
 author: '`r readd(AUTHOR)`'
 date: '`r Sys.Date()`, Analysis ID `r readd(ANALYSIS_UNIQUE_ID)`'
 output:
-  slidy_presentation: default
+  slidy_presentation:
+    self_contained: true
+    css: "presentation_style.css"
   html_document: default
 ---
 
+
 # Slide 1
 
-```{r echo=FALSE, results='asis'}
-source(file_in("./R/rmd_prep.R"))
-```
-
 * abc
+
+```{r, echo=FALSE}
+drake::readd(my_model)
+```
 
 # Slide 2
 
