@@ -9,14 +9,6 @@ RUN apt-get update && apt-get install -y \
 # drake-network-graphs from doom-emacs
     xdg-utils \
     firefox \
-    && install2.r --error \
-       --deps TRUE \
-       styler \
-       drake \
-       visNetwork \
-       glue \
-       logger \
-       RPushbullet \
     && ln -sf /usr/share/zoneinfo/Europe/Berlin /etc/localtime \
     && git config --global user.email "scheer@freescience.de" \
     && git config --global user.name "Marsel Scheer" \
@@ -25,5 +17,5 @@ RUN apt-get update && apt-get install -y \
     && usermod --shell /bin/bash rstudio \
 # create directory for mounting the host file system
     && su -l rstudio -c "mkdir -p /tmp/hostfs" \
-    && su -l rstudio -c "ln -s /tmp/hostfs /home/rstudio/hostfs" 
-
+    && su -l rstudio -c "ln -s /tmp/hostfs /home/rstudio/hostfs" \
+    && su -l rstudio -c "echo RENV_PATHS_ROOT=~/hostfs/drake-template/renv/ > /home/rstudio/.Renviron"
