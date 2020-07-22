@@ -1,4 +1,4 @@
-FROM drake_template_rstudio:4.0.0
+FROM rstudio:4.0.0
 
 USER rstudio
 
