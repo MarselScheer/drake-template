@@ -1,0 +1,4 @@
+slidy_presentation:
+  keep_md: yes
+  self_contained: true
+  css: "presentation_style.css"
