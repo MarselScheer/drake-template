@@ -10,10 +10,10 @@ restrict_targets(
 )
 
 logger::log_info("Create drake-graph")
-suppress_all(drake::r_vis_drake_graph())
+print(suppress_all(drake::r_vis_drake_graph()))
 
 logger::log_info("Outdated objects:")
-suppress_all(drake::r_outdated())
+print(suppress_all(drake::r_outdated()))
 
 logger::log_info("Predicted runtimes")
 print(suppress_all((drake::r_predict_runtime(jobs = 1L))))
