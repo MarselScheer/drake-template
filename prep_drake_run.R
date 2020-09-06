@@ -1,6 +1,7 @@
 if (!("restrict_targets" %in% ls())) {
   source("R/infrastructure.R")
 }
+set_num_cpus(cpus = 1L)
 
 restrict_targets(
 #  targets = "my_data",
@@ -15,7 +16,6 @@ logger::log_info("Outdated objects:")
 suppress_all(drake::r_outdated())
 
 logger::log_info("Predicted runtimes")
-set_num_cpus(cpus = 2)
-suppress_all((drake::r_predict_runtime(jobs = get_num_cpus())))
+print(suppress_all((drake::r_predict_runtime(jobs = 1L))))
 
-logger::log_info("Call execute_plans() to start drake processing the plans.")
+logger::log_info("Call execute_plans(cpus = <integer>) to start drake processing the plans.")
