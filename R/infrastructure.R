@@ -118,9 +118,12 @@ set_num_cpus <- function(cpus = 1L) {
 
 ##' Execute drake-plan from the console
 ##'
+##' @param cpus integer. number of cpus used by drake
 ##' @return no explicit return value
 ##' @export
-execute_plans <- function() {
+execute_plans <- function(cpus = 1L) {
+
+  set_num_cpus(cpus = cpus)
 
   # make sure that current plan is loaded so that filtering
   # targets is performed correctly
