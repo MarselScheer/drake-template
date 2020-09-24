@@ -109,7 +109,6 @@ get_num_cpus <- function() {
 ##'
 ##' @param cpus integer. number of cpus used by drake
 ##' @return no explicit return value
-##' @export
 set_num_cpus <- function(cpus = 1L) {
   NCPUS <- cpus
   save(NCPUS, file = ".ncpus.Rdata")
