@@ -109,7 +109,6 @@ get_num_cpus <- function() {
 ##'
 ##' @param cpus integer. number of cpus used by drake
 ##' @return no explicit return value
-##' @export
 set_num_cpus <- function(cpus = 1L) {
   NCPUS <- cpus
   save(NCPUS, file = ".ncpus.Rdata")
@@ -119,9 +118,11 @@ set_num_cpus <- function(cpus = 1L) {
 ##' Execute drake-plan from the console
 ##'
 ##' @param cpus integer. number of cpus used by drake
+##' @param confirm logical. if a confirmation is necessary to
+##' start the execution during interactive usage.
 ##' @return no explicit return value
 ##' @export
-execute_plans <- function(cpus = 1L) {
+execute_plans <- function(cpus = 1L, confirm = TRUE) {
 
   set_num_cpus(cpus = cpus)
 
@@ -131,7 +132,7 @@ execute_plans <- function(cpus = 1L) {
   cat("\n\nConfirm settings:\n\n")
   filter_selected_targets(plan = plan)
   get_num_cpus()
-  if (interactive()) {
+  if (interactive() && confirm) {
     answer <- readline(prompt = "Start drake? (y/N) ")
     if (answer != "y"){
       logger::log_error("Manually aborted")
