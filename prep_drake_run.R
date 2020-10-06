@@ -10,7 +10,7 @@ restrict_targets(
 )
 
 logger::log_info("Create drake-graph")
-print(suppress_all(drake::r_vis_drake_graph()))
+print(suppress_all(drake::r_vis_drake_graph(targets_only = TRUE)))
 
 logger::log_info("Outdated objects:")
 print(suppress_all(drake::r_outdated()))
