@@ -10,7 +10,32 @@ drake functionalities. However, the functionalities I use
 in my personal workflow are condensed in a file which makes
 it easier to call them frequently.
 
-# How to work with the template
+# Makefile
+
+Use make commands to install the necessary R-libraries need by
+drake:
+
+```
+make install-r-libs
+```
+
+You can also execute the complete drake plan with make which also
+allow to disconnect from the computer
+
+```
+make run-drake-batch
+```
+
+See 
+
+```
+make help
+```
+
+for futher make-commands.
+
+
+# How to work with the template (interactively not using make)
 
 * prep_drake_run.R is a convience function for analysing 
   and executing the plan, i.e.
@@ -31,19 +56,6 @@ The following files follow the recommended pattern:
 * R/funs.R defines the functions that are used in the plans
 * R/libs.R defines the libraries to be used
 
-# Batch-mode
-
-You can build targets using the following commands, where nohup
-will allow you to also disconnect from the computer:
-
-* nohup Rscript -e "source('R/infrastructure.R'); drake::make(plan)" &
-* nohup Rscript -e "source('R/infrastructure.R'); drake::r_make()" &
-* nohup Rscript -e "source('R/infrastructure.R'); execute_plans()" &
-
-With a pushbullet-key in place all three commands will send a 
-pushbullet notification in case an error happend during the
-build. Additionally, execute_plans() will also send a pushbullet
-notification once all targets were build.
 
 # RPushbullet
 
@@ -60,13 +72,4 @@ Pushbullet-key in ~/.rpushbullet.json as
 {
   "key": "..key.."
 }
-~~~~
-
-# Packagemanger
-
-The template uses renv to keep track of the package dependencies, 
-where the packages can be restored with:
-~~~~
-install.packages("renv") # in case it is not already installed
-renv::init()
 ~~~~
