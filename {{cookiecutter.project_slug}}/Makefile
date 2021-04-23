@@ -9,7 +9,7 @@ install-r-libs:
 	Rscript -e "install.packages('renv'); renv::init()"
 
 run-drake-batch:
-	nohup Rscript -e "source('R/infrastructure.R'); execute_plans()" &
+	nohup Rscript -e "source('R/infrastructure.R'); execute_plans()"
 
 clean-drake-cache:
 	rm -rf .drake
